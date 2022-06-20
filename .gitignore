@@ -1,0 +1,12 @@
+/node_modules/
+/build/
+/lib/
+/dist/
+/test-results/
+coverage
+*.log
+*-lock.yaml
+.vscode
+package-lock.json
+pnpm-lock.yaml
+.npmrc
