@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { toBinary } from 'src/eg/pure';
+import { toBinary } from 'src/devBin/pure';
 
 /**
  * Run as part of the self-test to ensure project configuration allows import

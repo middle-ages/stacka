@@ -1,98 +1,163 @@
-import { array as AR, function as FN, option as OP } from 'fp-ts';
-import {
-  bounds,
-  getCorners,
-  posT,
-  rect,
-  rectBottom,
-  rectRight,
-  showRect,
-  sizeFromCorners,
-} from 'src/geometry';
-import { pairMap, Tuple4 } from 'util/tuple';
+import * as laws from 'fp-ts-laws';
+import { function as FN } from 'fp-ts';
+import { pos, rect } from 'src/geometry';
 import { assert, suite, test } from 'vitest';
-
-const build = ([a, b, c, d]: Tuple4<number>) =>
-  rect.fromQuad([
-    [a, b],
-    [c, d],
-  ]);
+import { mapBoth } from 'fp-ts-std/Tuple';
 
 /**
  *  ```txt
  *
- *  iut1235
- * ┄┄┄┄┄┄┄┄┄
- * ┌──234──┐
- * │⁺⁺⁺⁺⁺⁺⁺│
- * 1⁺⁺█░░⁺⁺│
- * 2⁺⁺░░░⁺⁺│
- * 3⁺⁺░░░⁺⁺│
- * 4⁺⁺░░░⁺⁺│
- * 5⁺⁺░░█⁺⁺│
- * │⁺⁺⁺⁺⁺⁺⁺│
+ *  iut1235     iut1224
+ * ┄┄┄┄┄┄┄┄┄   ┄┄┄┄┄┄┄┄┄
+ * ┌──234──┐   ┌──23──┐
+ * │⁺⁺⁺⁺⁺⁺⁺│   │⁺⁺⁺⁺⁺⁺│
+ * 1⁺⁺░░░⁺⁺│   1⁺⁺░░⁺⁺│
+ * 2⁺⁺░░░⁺⁺│   2⁺⁺░░⁺⁺│
+ * 3⁺⁺░░░⁺⁺│   3⁺⁺░░⁺⁺│
+ * 4⁺⁺░░░⁺⁺│   4⁺⁺░░⁺⁺│
+ * 5⁺⁺░░░⁺⁺│   │⁺⁺⁺⁺⁺⁺│
+ * │⁺⁺⁺⁺⁺⁺⁺│   └──────┘
  * └───────┘
  * ```
  */
-const iut1235 = FN.pipe(
-  [1, 2, 3, 5],
-  build,
-  FN.pipe('.', OP.some, rect.fillChar.set),
-);
+const iut1235 = FN.pipe([1, 2, 3, 5], rect.fromTuple),
+  iut1224 = FN.pipe([1, 2, 2, 4], rect.fromTuple);
 
-suite('rectangular', () => {
-  test('show rect', () =>
-    assert.equal(showRect.show(iut1235), '1:2 [w:3,h:5]'));
-  test('rectBottom', () => assert.equal(rectBottom(iut1235), 5));
-  test('rect/right', () => assert.equal(rectRight(iut1235), 4));
-  test('toQuadOf', () => assert.deepEqual(rect.toTuple(iut1235), [1, 2, 3, 5]));
-  test('getCorners', () =>
-    assert.deepEqual(FN.pipe(iut1235, getCorners), [
-      [1, 2],
-      [5, 4],
+suite('rect', () => {
+  test('show', () => assert.equal(rect.show.show(iut1235), '▲1:◀2 ↔3:↕5'));
+
+  test('bottomRight', () =>
+    assert.deepEqual(rect.bottomRight.get(iut1235), pos(5, 4)));
+
+  test('equals', () => assert.isTrue(rect.eq.equals(iut1235, iut1235)));
+
+  test('fromCorners', () =>
+    assert.deepEqual(rect.fromCorners([pos(1, 2), pos(5, 4)]), iut1235));
+
+  test('corners', () =>
+    assert.deepEqual(rect.corners(iut1235), [pos(1, 2), pos(5, 4)]));
+
+  test('setRight', () =>
+    assert.deepEqual(FN.pipe(iut1235, rect.right.set(0), rect.corners), [
+      pos(1, -2),
+      pos(5, 0),
     ]));
-  test('∀ρ∈Rectangular: ρ ▷ getCorners•sizeFromCorners = ρ ▷ sizeLens•get', () =>
+
+  test('setBottomRight', () =>
     assert.deepEqual(
-      FN.pipe(iut1235, getCorners, pairMap(posT), sizeFromCorners),
+      FN.pipe(iut1235, rect.bottomRight.set(pos(4, 2)), rect.pos.get),
+      pos.origin,
+    ));
+
+  suite('center', () => {
+    suite('get', () => {
+      test('odd', () =>
+        assert.deepEqual(rect.middleCenter.get(iut1235), pos(3, 3)));
+
+      test('even', () =>
+        assert.deepEqual(rect.middleCenter.get(iut1224), pos(2, 2)));
+    });
+
+    suite('set', () => {
+      /**
+       *  ```txt
+       *          iut1235                      iut1224
+       * ┄┄┄┄┄┄┄┄┄┄┄┄┬┄┄┄┄┄┄┄┄┄┄┄┄┄┄   ┄┄┄┄┄┄┄┄┄┄┄┄┬──┄┄┄┄┄┄┄┄┄┄┄
+       * before move ┊  after center   before move ┊ after center
+       *             ┊   on origin                 ┊  on origin
+       *             ┊                             ┊
+       *     ⁺⁺⁺     ┊     ⁻ ⁺             ⁺⁺      ┊      ⁺
+       *  ┌──234──┐  ┊  ┌──101──┐       ┌──23──┐   ┊  ┌──01──┐
+       *  │⁺⁺⁺⁺⁺⁺⁺│  ┊  │⁺⁺⁺⁺⁺⁺⁺│       │⁺⁺⁺⁺⁺⁺│   ┊  │⁺⁺⁺⁺⁺⁺│
+       * ⁺1⁺⁺░░░⁺⁺│  ┊ ⁻2⁺⁺░░░⁺⁺│      ⁺1⁺⁺░░⁺⁺│   ┊ ⁻1⁺⁺░░⁺⁺│
+       * ⁺2⁺⁺░░░⁺⁺│  ┊ ⁻1⁺⁺░░░⁺⁺│      ⁺2⁺⁺░░⁺⁺│   ┊  0⁺⁺░░⁺⁺│
+       * ⁺3⁺⁺░░░⁺⁺│  ┊  0⁺⁺░░░⁺⁺│      ⁺3⁺⁺░░⁺⁺│   ┊ ⁺1⁺⁺░░⁺⁺│
+       * ⁺4⁺⁺░░░⁺⁺│  ┊ ⁺1⁺⁺░░░⁺⁺│      ⁺4⁺⁺░░⁺⁺│   ┊ ⁺2⁺⁺░░⁺⁺│
+       * ⁺5⁺⁺░░░⁺⁺│  ┊ ⁺2⁺⁺░░░⁺⁺│       │⁺⁺⁺⁺⁺⁺│   ┊  │⁺⁺⁺⁺⁺⁺│
+       *  │⁺⁺⁺⁺⁺⁺⁺│  ┊  │⁺⁺⁺⁺⁺⁺⁺│       └──────┘   ┊  └──────┘
+       *  └───────┘  ┊  └───────┘
+       */
+      const move = rect.middleCenter.set(pos.origin),
+        [movedOdd, movedEven] = FN.pipe([iut1235, iut1224], mapBoth(move));
+
+      test('odd', () => assert.deepEqual(rect.pos.get(movedOdd), pos(-2, -1)));
+
+      test('even', () => assert.deepEqual(rect.pos.get(movedEven), pos(-1, 0)));
+    });
+  });
+
+  test('corners and size', () =>
+    assert.deepEqual(
+      FN.pipe(iut1235, rect.corners, pos.rectSize),
       rect.size.get(iut1235),
     ));
 
-  suite('bounds', () => {
-    test('basic', () =>
+  suite('equality', () => {
+    test('eq', () => assert.isTrue(rect.eq.equals(iut1235, iut1235)));
+    test('eqPos', () => assert.isTrue(rect.eqPos.equals(iut1235, iut1235)));
+    test('eqSize', () => assert.isTrue(rect.eqSize.equals(iut1235, iut1235)));
+  });
+
+  suite('add', () => {
+    test('this ⊕ this = this', () =>
+      assert.deepEqual(FN.pipe(iut1235, rect.addC(iut1235)), iut1235));
+
+    test('this ⊕ ∅ = this', () =>
+      assert.deepEqual(FN.pipe(iut1235, rect.addC(rect.empty)), iut1235));
+
+    test('∅ ⊕ this = this', () =>
+      assert.deepEqual(FN.pipe(rect.empty, rect.addC(iut1235)), iut1235));
+
+    test('this ⊕ translate(this)', () => {
+      const translated = FN.pipe(iut1235, FN.flow(pos, rect.addPos)(1, 1));
+
       assert.deepEqual(
-        FN.pipe(iut1235, AR.of, bounds),
-        FN.pipe(iut1235, rect.fillChar.set(OP.none)),
+        FN.pipe(iut1235, rect.addC(translated)),
+        FN.pipe(iut1235, rect.addWidth(1), rect.addHeight(1)),
+      );
+    });
+
+    test('this ⊕ smaller(this) = this', () =>
+      assert.deepEqual(
+        rect.stack([
+          iut1235,
+          FN.pipe(iut1235, rect.subWidth(1), rect.subHeight(2)),
+        ]),
+        iut1235,
       ));
 
-    suite('3 rects', () => {
+    test('stack', () => {
       /**
        *  ```txt
-       *
-       *    ←─╴7╶─→
-       * ┌──2345678─┐
-       * │⁺⁺⁺⁺⁺⁺⁺⁺⁺⁺│
-       * 1⁺⁺█░░⁺⁺⁺⁺⁺1 ↑
-       * 2⁺⁺░░█░░░░⁺2 │
-       * 3⁺⁺░a▒░b░░⁺3 │
-       * 4⁺⁺░░▒░░░█⁺4 ╵
-       * 5⁺⁺░░█⁺⁺⁺⁺⁺5 9
-       * │⁺⁺⁺⁺⁺⁺⁺⁺⁺⁺│ ╷
-       * 7⁺⁺⁺⁺⁺⁺█░░⁺7 │
-       * 8⁺⁺⁺⁺⁺⁺░c░⁺8 │
-       * 9⁺⁺⁺⁺⁺⁺░░█⁺9 ↓
-       * └──2345678─┘
+       *         ←─╴7╶─→
+       *      ┌──2345678─┐
+       *      │⁺⁺⁺⁺⁺⁺⁺⁺⁺⁺│
+       *      1⁺⁺░░░⁺⁺⁺⁺⁺1 ↑
+       *      2⁺⁺░░▒░░░░⁺2 │
+       *      3⁺⁺░a▒░b░░⁺3 │
+       *      4⁺⁺░░▒░░░░⁺4 ╵
+       *      5⁺⁺░░░⁺⁺⁺⁺⁺5 9
+       *      │⁺⁺⁺⁺⁺⁺⁺⁺⁺⁺│ ╷
+       *      7⁺⁺⁺⁺⁺⁺░░░⁺7 │
+       *      8⁺⁺⁺⁺⁺⁺░c░⁺8 │
+       *      9⁺⁺⁺⁺⁺⁺░░░⁺9 ↓
+       *      └──2345678─┘
        * ```
        */
       const abc = [
-        build([1, 2, 3, 5]),
-        build([2, 4, 5, 3]),
-        build([7, 6, 3, 3]),
+        rect.fromCorners([pos(1, 2), pos(5, 4)]),
+        rect.fromCorners([pos(2, 4), pos(4, 8)]),
+        rect.fromCorners([pos(7, 6), pos(9, 8)]),
       ];
 
-      test('bounds', () =>
-        assert.deepEqual(FN.pipe(abc, bounds), build([1, 2, 7, 9])));
+      const actual = rect.stack(abc);
+
+      assert.deepEqual(actual, rect.fromCorners([pos(1, 2), pos(9, 8)]));
     });
   });
-  test('paint', () =>
-    assert.deepEqual(rect.paint(iut1235), ['...', '...', '...', '...', '...']));
+
+  suite('laws', () => {
+    test('eq', () => laws.eq(rect.eq, rect.arb));
+    test('monoid', () => laws.monoid(rect.monoid, rect.eq, rect.arb));
+  });
 });

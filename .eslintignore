@@ -1,6 +1,9 @@
 node_modules/
+README.md
+doc/
 dist/
 build/
 coverage/
 test-results/
+test-data/
 .eslintrc.cjs

@@ -1,0 +1,27 @@
+{
+  "display": "Build",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "types": [
+      "node"
+    ],
+    "paths": {
+      "src/*": [
+        "src/*"
+      ],
+      "util/*": [
+        "src/util/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "src/**/tests/*.test.ts",
+    "src/util/test.ts"
+  ]
+}

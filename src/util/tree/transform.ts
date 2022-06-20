@@ -1,11 +1,12 @@
 import { array as AR, function as FN } from 'fp-ts';
 import { fork } from 'fp-ts-std/Function';
 import { addAfter, append } from 'util/array';
-import { zipAlgebrasOf } from 'util/fix/kind2';
+import { zipAlgebrasU } from 'util/fix/kind2';
 import { applyPair, Pair } from 'util/tuple';
 import { getIdF, IdAlgebraOf } from './idTree';
+import { getNodesF, mapPluckF } from './lens';
 import { treeFunctor2 } from './schemes';
-import { getNodesF, mapPluckF, TreeAlgebra, TreeAlgebraOf } from './TreeF';
+import { TreeAlgebra, TreeAlgebraOf } from './types';
 
 export type SeqAlgebra<A> = TreeAlgebra<A, number[]>;
 export type SeqAlgebraOf = TreeAlgebraOf<number[]>;
@@ -23,7 +24,7 @@ export const degree: SeqAlgebraOf = FN.flow(
   applyPair,
 );
 
-export const preorder: TreeAlgebraOf<Pair<number[]>> = zipAlgebrasOf(
+export const preorder: TreeAlgebraOf<Pair<number[]>> = zipAlgebrasU(
   treeFunctor2,
 )(depth, degree);
 

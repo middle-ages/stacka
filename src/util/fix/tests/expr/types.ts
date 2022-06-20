@@ -43,13 +43,12 @@ export class Not<A> implements HKT<URI, A> {
   readonly _A!: A;
   constructor(readonly expr: A) {}
   map: ExprMap<A> = f => new Not(f(this.expr));
-  //   <A, B>(ta: Kind<T, A>, f: (a: A) => EF.Effect<R, E, B>): EF.Effect<R, E, Kind<T, B>>;
   mapT = <B>(f: Unary<A, Trampoline<B>>) => new Not(f(this.expr));
   static of = <A>(expr: A): Not<A> => new Not(expr);
 }
 
 export class And<A> implements HKT<URI, A> {
-  readonly _tag: 'And' = 'And';
+  readonly _tag = 'And' as const;
   readonly _URI!: URI;
   readonly _A!: A;
   constructor(readonly left: A, readonly right: A) {}
@@ -57,7 +56,7 @@ export class And<A> implements HKT<URI, A> {
 }
 
 export class Or<A> implements HKT<URI, A> {
-  readonly _tag: 'Or' = 'Or';
+  readonly _tag = 'Or' as const;
   readonly _URI!: URI;
   readonly _A!: A;
   constructor(readonly left: A, readonly right: A) {}

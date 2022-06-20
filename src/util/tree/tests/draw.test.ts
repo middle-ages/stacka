@@ -3,7 +3,7 @@ import { Effect, Endo, Unary } from 'util/function';
 import { nChars, nSpaces } from 'util/string';
 import { assert, suite, test } from 'vitest';
 import { defaultConfig, draw, drawFromConfig, WithConfig } from '../draw';
-import { leaf, Tree, tree } from '../TreeF';
+import { leaf, Tree, tree } from 'util/tree';
 
 suite('draw', () => {
   const buildExpected: Unary<number, Endo<string>> = indent => expectInner => {

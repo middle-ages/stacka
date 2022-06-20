@@ -1,3 +1,5 @@
+import { function as FN, number as NU } from 'fp-ts';
+import { leaf, tree, Tree, treeF } from 'util/tree';
 import { fix } from 'util/fix/kind2';
 import { Unary } from 'util/function';
 import { assert, suite, test } from 'vitest';
@@ -10,14 +12,12 @@ import {
   TreeUnfolderOf,
   unfoldTree,
 } from '../schemes';
-import { leaf, tree, Tree, TreeF } from '../TreeF';
-import { function as FN, number as NU } from 'fp-ts';
 
 suite('recursion schemes', () => {
   const fixTree = (n: number, nodes: Tree<number>[]): Tree<number> =>
-    fix(TreeF.of([n, nodes]));
+    fix(treeF([n, nodes]));
 
-  const node1: Tree<number> = fix(TreeF.leafOf<Tree<number>>()(1));
+  const node1: Tree<number> = fix(treeF([1, []]));
   const node2: Tree<number> = fixTree(2, [node1, node1]);
   const node3: Tree<number> = fixTree(3, [node1, node2]);
 

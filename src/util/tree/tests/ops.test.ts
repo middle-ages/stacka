@@ -1,20 +1,20 @@
 import { array as AR, function as FN, number as NU } from 'fp-ts';
-import { assert, suite, test } from 'vitest';
+import { Unary } from 'util/function';
 import { Tuple3 } from 'util/tuple';
+import { assert, suite, test } from 'vitest';
 import { getShow } from '../instances';
 import { flattenTree, mapTree, sequenceTree } from '../ops';
 import { showTree } from '../schemes';
-import { leaf, tree, Tree } from '../TreeF';
-import { Unary } from 'util/function';
+import { leaf, tree, Tree } from 'util/tree';
 
 type NTree = Tree<number>;
 const show = showTree(NU.Show);
 
-suite('ops', () => {
-  const iut1: NTree = leaf(2),
-    iut2: NTree = tree(4)([iut1, iut1]),
-    iut3: NTree = tree(8)([iut2, iut2]);
+const iut1: NTree = leaf(2),
+  iut2: NTree = tree(4)([iut1, iut1]),
+  iut3: NTree = tree(8)([iut2, iut2]);
 
+suite('ops', () => {
   suite('map', () => {
     const checkMap = (iut: NTree, expect: string) =>
       assert.equal(FN.pipe(iut, mapTree(FN.increment), show), expect);

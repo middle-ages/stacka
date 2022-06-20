@@ -6,92 +6,111 @@ import {
   number as NU,
   ord as OD,
   predicate as PRE,
-  readonlyArray as RA,
   show as SH,
 } from 'fp-ts';
+import * as fc from 'fast-check';
 import { curry2, fork } from 'fp-ts-std/Function';
-import { increment } from 'fp-ts/lib/function';
-import * as LE from 'monocle-ts/lib/Lens';
-import stringWidth from 'string-width';
-import { emptyJoin } from 'util/array';
-import { maxPositiveMonoid, monoOrdStruct } from 'util/fp-ts';
-import { BinaryC, Endo, Unary } from 'util/function';
-import { propLens } from 'util/lens';
-import { mapValues, ModifierOf, objectMono, typedValues } from 'util/object';
-import { Row, Char, MaybeChar, orSpace } from 'util/string';
-import { Pair, pairMap } from 'util/tuple';
-import { RowList } from '../types';
+import { add as plus, subtract } from 'fp-ts-std/Number';
+import { dup, mapBoth, withFst, withSnd } from 'fp-ts-std/Tuple';
+import { maxPositiveMonoid } from 'util/fp-ts';
+import { Binary, BinOp, BinOpC, BinOpT, Endo, Unary } from 'util/function';
+import { modLens, propLens } from 'util/lens';
+import { objectMono, typedValues } from 'util/object';
+import { Pair, pairFlow } from 'util/tuple';
 
 export const sizeKeys = ['width', 'height'] as const;
 
-export type SizeKeys = typeof sizeKeys;
-export type SizeKey = SizeKeys[number] & string;
+export type SizeKey = typeof sizeKeys[number];
 export type Size = Record<SizeKey, number>;
 
-export const mapSizeKeys = <R>(f: Unary<SizeKey, R>): Pair<R> =>
-  FN.pipe([...sizeKeys], pairMap(f));
-
-export const size: Unary<Pair<number>, Size> = ([width, height]) => ({
+//#region build
+export const build: Binary<number, number, Size> = (width, height) => ({
     width,
     height,
   }),
-  width: Unary<number, Size> = width => ({ width, height: 0 }),
-  height: Unary<number, Size> = height => ({ width: 0, height }),
-  sizePair: Unary<Size, Pair<number>> = typedValues,
-  sizeLenses = FN.pipe(propLens<Size>(), mapSizeKeys),
-  [sizeWidthLens, sizeHeightLens] = sizeLenses,
-  getWidth: Unary<Size, number> = sizeWidthLens.get,
-  getHeight: Unary<Size, number> = sizeHeightLens.get,
-  incSize: Endo<Size> = mapValues(increment),
-  rowWidth: Unary<Row, Size> = FN.flow(stringWidth, width);
+  tupled = FN.tupled(build),
+  fromWidth: Unary<number, Size> = FN.flow(withSnd(0), tupled),
+  fromHeight: Unary<number, Size> = FN.flow(withFst(0), tupled),
+  square: Unary<number, Size> = FN.flow(dup, tupled),
+  [empty, unitSquare] = FN.pipe([0, 1], mapBoth(square));
+//#endregion
 
-export const modSizeWidth: ModifierOf<Size, 'width'> = f =>
-    FN.pipe(sizeWidthLens, LE.modify(f)),
-  modSizeHeight: ModifierOf<Size, 'height'> = f =>
-    FN.pipe(sizeHeightLens, LE.modify(f));
+//#region query
+const lens = FN.flow(propLens<Size>(), modLens);
 
-export const showSize: SH.Show<Size> = {
-  show: ({ width, height }) => `w:${width},h:${height}`,
-};
+export const pair: Unary<Size, Pair<number>> = typedValues,
+  width = lens('width'),
+  height = lens('height'),
+  area: Unary<Size, number> = ({ width, height }) => width * height,
+  isEmpty: PRE.Predicate<Size> = ({ width, height }) =>
+    width === 0 && height === 0;
+//#endregion
 
-export const fillSize: BinaryC<Char, Size, RowList> =
-  c =>
-  ({ width, height }) =>
-    FN.pipe(
-      AR.replicate(width, c),
-      emptyJoin,
-      FN.pipe(height, curry2(AR.replicate)),
-    );
+//#region modify
+export const [addWidth, addHeight] = [
+    FN.flow(plus, width.mod),
+    FN.flow(plus, height.mod),
+  ],
+  [subWidth, subHeight] = [
+    FN.flow(subtract, width.mod),
+    FN.flow(subtract, height.mod),
+  ],
+  [add, sub]: Pair<BinOp<Size>> = [
+    (fst, { width, height }) =>
+      FN.pipe(fst, addWidth(width), addHeight(height)),
+    (fst, { width, height }) =>
+      FN.pipe(fst, subWidth(width), subHeight(height)),
+  ],
+  [subT, subC] = [FN.tupled(sub), curry2(sub)],
+  [addT, addC]: [BinOpT<Size>, BinOpC<Size>] = [FN.tupled(add), curry2(add)],
+  inc: Endo<Size> = FN.pipe([1, 1], tupled, addC),
+  [halfWidth, halfHeight] = [
+    width.mod(n => Math.floor(n / 2)),
+    height.mod(n => Math.floor(n / 2)),
+  ],
+  half: Endo<Size> = FN.flow(halfWidth, halfHeight),
+  scaleH: Unary<number, Endo<Size>> =
+    n =>
+    ({ width, height }) => ({ width: width * n, height }),
+  scaleV: Unary<number, Endo<Size>> =
+    n =>
+    ({ width, height }) => ({ width, height: height * n }),
+  scale: Unary<number, Endo<Size>> = FN.flow(fork([scaleH, scaleV]), pairFlow);
+//#endregion
 
-export const fillOrSpace: BinaryC<MaybeChar, Size, RowList> = FN.flow(
-  orSpace,
-  fillSize,
-);
+//#region instances
+const maxSizeNat = fc.nat(100);
 
-export const sizeMonoid: Unary<MO.Monoid<number>, MO.Monoid<Size>> = (
+export const getMonoid: Unary<MO.Monoid<number>, MO.Monoid<Size>> = (
     monoid: MO.Monoid<number>,
   ) => FN.pipe(monoid, objectMono(sizeKeys), MO.struct),
-  emptySize = sizeMonoid(NU.MonoidSum).empty,
-  maxSizeMonoid: MO.Monoid<Size> = sizeMonoid(maxPositiveMonoid), // size≥0
-  sumSizeMonoid: MO.Monoid<Size> = sizeMonoid(NU.MonoidSum),
-  sizeOrd: OD.Ord<Size> = FN.pipe(sizeKeys, monoOrdStruct(NU.Ord)),
-  sizeEq: EQ.Eq<Size> = EQ.struct({ width: NU.Eq, height: NU.Eq }),
-  fillSpace = fillSize(' ');
+  monoid: Record<'sum' | 'max', MO.Monoid<Size>> = {
+    max: getMonoid(maxPositiveMonoid), // size≥0
+    sum: getMonoid(NU.MonoidSum),
+  },
+  ord: Record<SizeKey, OD.Ord<Size>> = {
+    width: FN.pipe(NU.Ord, OD.contramap(width.get)),
+    height: FN.pipe(NU.Ord, OD.contramap(height.get)),
+  },
+  eq: EQ.Eq<Size> = {
+    equals: (fst, snd) =>
+      ord.width.equals(fst, snd) && ord.height.equals(fst, snd),
+  },
+  show: SH.Show<Size> = { show: ({ width, height }) => `↔${width}:↕${height}` },
+  arb: fc.Arbitrary<Size> = fc.record({
+    width: maxSizeNat,
+    height: maxSizeNat,
+  });
+//#endregion
 
-export const isSizeZero: PRE.Predicate<Size> = FN.pipe(
-  emptySize,
-  curry2(sizeEq.equals),
-);
+//#region operations
+export const fill =
+  <T>(t: T): Unary<Size, T[][]> =>
+  s =>
+    AR.replicate(height.get(s), AR.replicate(width.get(s), t));
 
-export const maxRowWidth: Unary<readonly Row[], number> = FN.flow(
-  RA.map(rowWidth),
-  MO.concatAll(maxSizeMonoid),
-  getWidth,
-);
-
-/** Given a row, returns its width delta vs. given width */
-export const deltaMaxWidth: BinaryC<number, Row, number> = width => s =>
-  width - rowWidth(s).width;
-
-export const measureRowData: Unary<RowList, Size> = data =>
-  FN.pipe(data, fork([maxRowWidth, RA.size]), size);
+export const fitsInside: Unary<Size, PRE.Predicate<Size>> =
+  ({ width: parentWidth, height: parentHeight }) =>
+  ({ width: childWidth, height: childHeight }) =>
+    parentWidth >= childWidth && parentHeight >= childHeight;
+//#endregion

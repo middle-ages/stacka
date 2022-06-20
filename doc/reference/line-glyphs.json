@@ -1,0 +1,68 @@
+{
+  "top": "▔",
+  "right": "▕",
+  "bottom": "▁",
+  "left": "▏",
+  "horizontal": "─",
+  "vertical": "│",
+  "thick": {
+    "horizontal": "━",
+    "vertical": "┃",
+    "dotted": {
+      "horizontal": "┉",
+      "vertical": "┋"
+    },
+    "dashed": {
+      "horizontal": "┅",
+      "vertical": "┇",
+      "wide": {
+        "horizontal": "╍",
+        "vertical": "╏"
+      }
+    }
+  },
+  "double": {
+    "horizontal": "═",
+    "vertical": "║"
+  },
+  "dotted": {
+    "horizontal": "┈",
+    "vertical": "┊",
+    "thick": {
+      "horizontal": "┉",
+      "vertical": "┋"
+    }
+  },
+  "dashed": {
+    "horizontal": "┄",
+    "vertical": "┆",
+    "thick": {
+      "horizontal": "┅",
+      "vertical": "┇",
+      "wide": {
+        "horizontal": "╍",
+        "vertical": "╏"
+      }
+    },
+    "wide": {
+      "horizontal": "╌",
+      "vertical": "╎",
+      "thick": {
+        "horizontal": "╍",
+        "vertical": "╏"
+      }
+    }
+  },
+  "near": {
+    "top": "▔",
+    "right": "▕",
+    "bottom": "▁",
+    "left": "▏"
+  },
+  "halfSolid": {
+    "top": "▀",
+    "right": "▐",
+    "bottom": "▄",
+    "left": "▌"
+  }
+}

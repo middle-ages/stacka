@@ -1,20 +1,19 @@
 import {
-  endomorphism as EN,
   array as AR,
   eq as EQ,
   function as FN,
   hkt as HKT,
   monoid as MO,
   number as NU,
-  option as OP,
   ord as OD,
   predicate as PRE,
   readonlyArray as RA,
   show as SH,
 } from 'fp-ts';
 import { fork } from 'fp-ts-std/Function';
+import { withSnd } from 'fp-ts-std/Tuple';
 import { Kind, URIS } from 'fp-ts/lib/HKT';
-import { Endo, Unary } from 'util/function';
+import { Unary } from 'util/function';
 import {
   monoObject,
   ObjectEntry,
@@ -22,7 +21,6 @@ import {
   setPropOf,
   typedEntries,
 } from 'util/object';
-import { leftTupleWith } from 'util/tuple';
 
 export type Extract<F extends HKT.URIS, B> = <A>(from: HKT.Kind<F, A>) => B;
 
@@ -70,7 +68,7 @@ export const recordEq =
   <K extends keyof T>(keys: K[]): EQ.Eq<T> =>
     FN.pipe(
       keys,
-      AR.map(leftTupleWith(eq)),
+      AR.map(withSnd(eq)),
       Object.fromEntries,
       EQ.struct,
     ) as EQ.Eq<T>;
@@ -78,17 +76,9 @@ export const recordEq =
 export const partition = <A>(f: PRE.Predicate<A>): Unary<A[], [A[], A[]]> =>
   FN.flow(AR.partition(f), fork([x => x.left, x => x.right]));
 
-export const fromBool =
-  (b: boolean) =>
-  <T>(o: T): OP.Option<T> =>
-    b ? OP.some(o) : OP.none;
-
 export const maxPositiveMonoid: MO.Monoid<number> = FN.pipe(
   NU.Bounded,
   MO.max,
   // fp-ts max zero is -∞, but for positives, 0 is correct
   FN.pipe(0, setPropOf<MO.Monoid<number>>()('empty')),
 );
-
-export const flowEndomorphisms = <A>(fs: Endo<A>[]): Endo<A> =>
-  FN.pipe(fs, MO.concatAll(EN.getMonoid<A>()));

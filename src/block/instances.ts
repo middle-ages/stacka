@@ -1,18 +1,22 @@
-import { show as SH } from 'fp-ts';
-import { format } from 'util/number';
-import { orSpace } from 'util/string';
-import { showAlign } from '../align';
-import { showSize } from '../geometry';
+import { string as STR, eq as EQ, function as FN, show as SH } from 'fp-ts';
+import { unwords } from 'fp-ts-std/String';
+import { grid } from 'src/grid';
+import { showRect } from './rect';
 import { Block } from './types';
+import { rect } from 'src/geometry';
+import { align } from 'src/align';
+import { backdrop } from 'src/backdrop';
 
 export const Show: SH.Show<Block> = {
-  show: b => {
-    const { size, rows, align, fillChar } = b,
-      sizeMsg = showSize.show(size),
-      alignMsg = showAlign.show(align),
-      dataMsg = format(rows.length),
-      fillMsg = orSpace(fillChar) === ' ' ? '' : `, fillChar: “${fillChar}”`;
-
-    return `Block(size:(${sizeMsg}), align:${alignMsg}, data: ${dataMsg}${fillMsg})`;
-  },
+  show: b => FN.pipe([showRect(b), grid.show.show(b.grid)], unwords),
 };
+
+export const show = Show.show;
+
+export const eq: EQ.Eq<Block> = EQ.struct({
+  grid: grid.eq,
+  rect: rect.eq,
+  align: align.eq,
+  blend: STR.Eq,
+  backdrop: backdrop.eq,
+});

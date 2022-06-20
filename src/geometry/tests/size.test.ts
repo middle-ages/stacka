@@ -1,28 +1,24 @@
 import { function as FN } from 'fp-ts';
-import { deltaMaxWidth, fillSize, maxRowWidth, size } from 'src/geometry';
-import stringWidth from 'string-width';
-import { Unary } from 'util/function';
+import * as laws from 'fp-ts-laws';
+import { add } from 'fp-ts-std/Number';
+import { size } from 'src/geometry';
 import { assert, suite, test } from 'vitest';
 
 suite('size', () => {
-  const text = ['a', 'bb', 'ccc', 'd'],
-    max = maxRowWidth(text);
+  test('basic', () => assert.deepEqual(size(1, 2), size.tupled([1, 2])));
 
-  test('maxRowWidth', () => assert.equal(max, 3));
+  test('lens', () =>
+    assert.deepEqual(
+      FN.pipe(size.fromHeight(3), size.height.mod(add(4)), size.height.get),
+      7,
+    ));
 
-  test('empty list maxRowWidth', () => assert.equal(maxRowWidth([]), 0));
+  test('addSize', () =>
+    assert.deepEqual(FN.pipe(size(1, 2), size.addC(size(3, 4))), size(4, 6)));
 
-  test('deltaMaxWidth', () => assert.equal(deltaMaxWidth(max)('bb'), 1));
-
-  suite('fillSize', () => {
-    const iut = FN.pipe([3, 4], size, fillSize('X'));
-
-    test('width', () =>
-      assert.deepEqual(
-        iut.map(stringWidth as Unary<string, number>),
-        [3, 3, 3, 3],
-      ));
-
-    test('height', () => assert.equal(iut.length, 4));
+  suite('laws', () => {
+    test('ord', () => laws.ord(size.ord.height, size.arb));
+    test('sum monoid', () => laws.monoid(size.monoid.sum, size.eq, size.arb));
+    test('max monoid', () => laws.monoid(size.monoid.max, size.eq, size.arb));
   });
 });

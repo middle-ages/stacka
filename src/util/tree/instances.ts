@@ -10,7 +10,8 @@ import {
 } from 'fp-ts';
 import { apTree, chainTree, mapTree } from './ops';
 import { showTree } from './schemes';
-import { tree, Tree, TreeURI } from './TreeF';
+import { Tree, TreeURI } from './types';
+import { tree } from './build';
 
 const map: FU.Functor1<TreeURI>['map'] = (t, f) => mapTree(f)(t),
   chain: CH.Chain1<TreeURI>['chain'] = (t, f) => chainTree(f)(t),

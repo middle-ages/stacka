@@ -15,6 +15,6 @@ source=${1:-src/devBin/should-run.ts}
 
 set -Eeuo pipefail
 
-# clean the args added by ts-node
+ shift
 
 ts-node-esm $source $@

@@ -1,5 +1,4 @@
-import { monoid as MO } from 'fp-ts';
-import { Unary } from '../function';
+import { Unary } from 'util/function';
 import { HasKey, KeyList, ValueList } from './types';
 
 /** Pick a subset of an exact type by keys
@@ -25,9 +24,11 @@ export const picks =
 export const picksT = <KS extends readonly PropertyKey[]>(keys: KS) =>
   picks(...keys);
 
-export const typedKeys = <T>(o: T): KeyList<T> => Object.keys(o) as any;
+export const typedKeys = <T extends {}>(o: T): KeyList<T> =>
+  Object.keys(o) as any;
 
-export const typedValues = <T>(o: T): ValueList<T> => Object.values(o) as any;
+export const typedValues = <T extends {}>(o: T): ValueList<T> =>
+  Object.values(o) as any;
 
 export const pluck =
   <K extends string>(k: K) =>
@@ -44,12 +45,6 @@ export const pluckFrom =
   <K extends string>(k: K) =>
   <T extends HasKey<K, T[K]>>(): Unary<T, T[K]> =>
     pluck(k);
-
-export const pluckOrZero =
-  <T extends {}>(M: MO.Monoid<T>) =>
-  <K extends string & keyof T>(k: K): Unary<T, T[K]> =>
-  o =>
-    (o ?? M.empty)[k];
 
 export const unaryObject =
   <K extends PropertyKey>(k: K) =>

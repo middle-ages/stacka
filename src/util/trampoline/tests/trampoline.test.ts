@@ -24,6 +24,7 @@ suite('trampoline monad', () => {
     const egDone: Trampoline<number> = done(42),
       egCont: Trampoline<number> = cont(() => egDone),
       egBind: Trampoline<number, number> = bind(egCont, flow(increment, done));
+
     const egShallow: Trampoline<number, number> = bind(
       egBind,
       flow(increment, done),

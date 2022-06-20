@@ -1,6 +1,6 @@
 import { pipe } from 'fp-ts/lib/function';
 import { HKT } from 'fp-ts/lib/HKT';
-import { BinaryC, Lazy, Unary } from '../function';
+import { BinaryC, Lazy, Unary } from 'util/function';
 
 export const URI = 'Trampoline' as const;
 export type URI = typeof URI;

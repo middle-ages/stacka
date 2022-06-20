@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
-# Run all build targets both browser and node
-# E.g.: npm build
+# Create a depenedncy free zero runtime Node.js
+# distribution ready to be run using the `node`
+# executable
+# E.g.: npm run build
 
 pm=`npm get package_manager`;
 
@@ -13,5 +15,6 @@ fi
 
 set -Eeuo pipefail
 
-$pm build:node
-$pm build:browser
+$pm build:compile
+$pm build:fix
+$pm build:types

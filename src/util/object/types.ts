@@ -32,7 +32,7 @@ export type KeyList<T> = U.ListOf<keyof T>;
  *   b: string;
  * }
  * export type Res = ValueList<Foo>; // [number, string]
- * ```
+ * ```gG
  */
 export type ValueList<
   T,
@@ -83,26 +83,7 @@ type EntryToRecord<T extends readonly [PropertyKey, any]> = T extends T
   ? Record<T[0], T[1]>
   : never;
 
-export type GetterOf<T extends {}, K extends keyof T> = Unary<T, T[K]>;
-export type GetterListOf<T extends {}> = ValueList<{
-  [K in keyof T]: GetterOf<T, K>;
-}>;
-
 export type SetterOf<T extends {}, K extends keyof T> = Unary<T[K], Endo<T>>;
 export type SetterListOf<T extends {}> = ValueList<{
   [K in keyof T]: SetterOf<T, K>;
 }>;
-
-export type ModifierOf<T extends {}, K extends keyof T> = Unary<
-  Endo<T[K]>,
-  Endo<T>
->;
-export type ModifierListOf<T extends {}> = ValueList<{
-  [K in keyof T]: ModifierOf<T, K>;
-}>;
-
-export type AccessorListOf<T extends {}> = [
-  GetterListOf<T>,
-  SetterListOf<T>,
-  ModifierListOf<T>,
-];

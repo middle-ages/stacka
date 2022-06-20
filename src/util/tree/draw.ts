@@ -7,14 +7,15 @@ import {
 import { sum } from 'fp-ts-std/Array';
 import { fork } from 'fp-ts-std/Function';
 import { prepend, unlines } from 'fp-ts-std/String';
-import { Color, colorizeFg } from 'util/color';
 import { initLast } from 'util/array';
 import { Binary, Endo, Unary } from 'util/function';
 import { mapValues } from 'util/object';
 import { lines, nChars, nSpaces, prependHeadTail } from 'util/string';
-import { Pair, pairMap } from 'util/tuple';
+import { Pair } from 'util/tuple';
+import { mapBoth } from 'fp-ts-std/Tuple';
 import { treeCata } from './schemes';
-import { getNodeCount, getNodes, getValue, Tree, TreeAlgebra } from './TreeF';
+import { Tree, TreeAlgebra } from './types';
+import * as LN from './lens';
 
 /**
  * Keys for one character strings used for edges:
@@ -44,7 +45,7 @@ export type ColorKeys = 'edge';
 
 export type EdgeConfig = Record<EdgeChar, string>;
 export type BulletConfig = Record<BulletString, string>;
-export type ColorConfig = Record<ColorKeys, Color | undefined>;
+export type ColorConfig<C = string> = Record<ColorKeys, C | undefined>;
 
 /**
  * Tree draw configuration
@@ -53,16 +54,17 @@ export type ColorConfig = Record<ColorKeys, Color | undefined>;
  * 2. `edge` - values for the one-char edges
  * 3. `bullet` - values for the multi-char bullets
  */
-export interface DrawConfig {
+export interface DrawConfig<C = string> {
   indent: number;
   edge: EdgeConfig;
   bullet: BulletConfig;
-  color: ColorConfig;
+  color: ColorConfig<C>;
+  colorize?: Unary<string, Endo<string>>;
 }
 
-export type WithConfig<T> = RE.Reader<DrawConfig, T>;
+export type WithConfig<T, C = string> = RE.Reader<DrawConfig<C>, T>;
 
-export const defaultConfig: DrawConfig = {
+export const defaultConfig: DrawConfig<string> = {
   indent: 1,
   edge: {
     init: '├',
@@ -78,6 +80,7 @@ export const defaultConfig: DrawConfig = {
   color: {
     edge: undefined,
   },
+  colorize: FN.constant(FN.identity),
 };
 
 // returns the formatted bullet config + prefix string for multi-line nodes
@@ -94,22 +97,23 @@ export const formatBullets: WithConfig<BulletConfig> = config => {
         : FN.pipe(edgeColor, colorEdge(config)),
     [leaf, node]: Pair<string> = FN.pipe(
       [bullet.leaf, bullet.node],
-      FN.pipe(indent, nChars(edge.horizontal), prepend, pairMap),
+      FN.pipe(indent, nChars(edge.horizontal), prepend, mapBoth),
     );
   return { leaf, node };
 };
 
-export const formatEdge: WithConfig<
-  Unary<Pair<string>, Endo<string[]>>
-> = config =>
-  FN.flow(
-    pairMap(FN.pipe(config.indent, nSpaces, prepend)),
-    prependHeadTail,
-    f =>
-      AR.map(
-        FN.flow(lines, f, FN.flow(STR.replace, AR.map)(/\s*$/, ''), unlines),
-      ),
-  );
+export const formatEdge: WithConfig<Unary<Pair<string>, Endo<string[]>>> =
+  config => pair => {
+    return FN.pipe(
+      pair,
+      mapBoth(FN.pipe(config.indent, nSpaces, prepend)),
+      prependHeadTail,
+      f =>
+        AR.map(
+          FN.flow(lines, f, FN.flow(STR.replace, AR.map)(/\s*$/, ''), unlines),
+        ),
+    );
+  };
 
 export const formatLabel: WithConfig<Binary<string, string[], string[]>> =
   config => (value, nodes) => {
@@ -127,11 +131,17 @@ export const formatLabel: WithConfig<Binary<string, string[], string[]>> =
     );
   };
 
-const colorEdge: WithConfig<Unary<Color | undefined, EdgeConfig>> =
+const colorEdge: WithConfig<Unary<string | undefined, EdgeConfig>> =
   config => color =>
     FN.pipe(
       config.edge,
-      color === undefined ? FN.identity : FN.pipe(color, colorizeFg, mapValues),
+      color === undefined
+        ? FN.identity
+        : FN.pipe(
+            color,
+            config.colorize ?? FN.constant(FN.identity),
+            mapValues,
+          ),
     );
 
 export const makeDrawAlgebra: WithConfig<TreeAlgebra<string, string>> =
@@ -198,14 +208,16 @@ export const computeChildLines =
     );
 
     return tree => {
-      const nodeCount = getNodeCount(tree);
+      const nodeCount = LN.getNodeCount(tree);
 
       return nodeCount
         ? FN.pipe(
-            getNodes(tree).slice(0, nodeIdx ?? nodeCount - 1),
+            LN.nodes<A>()
+              .get(tree)
+              .slice(0, nodeIdx ?? nodeCount - 1),
             AR.map(computeNodes),
             sum,
           )
-        : FN.pipe(tree, getValue, computeOwn);
+        : FN.pipe(tree, LN.value<A>().get, computeOwn);
     };
   };

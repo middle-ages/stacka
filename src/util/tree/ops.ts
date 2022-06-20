@@ -3,11 +3,14 @@ import {
   array as AR,
   function as FN,
   hkt as HKT,
+  tuple as TU,
 } from 'fp-ts';
+import { toFst, withFst } from 'fp-ts-std/Tuple';
 import { Mapper } from 'util/fp-ts';
 import { apply1, Unary } from 'util/function';
 import { treeCata } from './schemes';
-import { tree, Tree, TreeF, TreeURI } from './TreeF';
+import { Tree, TreeF, TreeURI } from './types';
+import { treeF, fixTree, tree } from './build';
 
 export const mapTree: Mapper<TreeURI> =
   <A, B>(f: Unary<A, B>): Unary<Tree<A>, Tree<B>> =>
@@ -66,3 +69,19 @@ export const extendTree =
       FN.pipe(f, extendTree, AR.map),
       FN.pipe(t, f, tree),
     );
+
+export const mapNode =
+  <A, B>(f: Unary<[A, Tree<B>[]], B>): Unary<Tree<A>, Tree<B>> =>
+  (treeA: Tree<A>): Tree<B> => {
+    const {
+      unfixed: { value, nodes },
+    } = treeA;
+
+    return FN.pipe(
+      FN.pipe(nodes, FN.pipe(f, mapNode, AR.map), withFst(value)),
+      toFst(f),
+      TU.mapSnd(TU.snd),
+      treeF,
+      fixTree,
+    );
+  };

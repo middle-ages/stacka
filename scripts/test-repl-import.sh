@@ -17,7 +17,7 @@ echo
 
 set -Eeuo pipefail
 
-import="import { toBinary } from 'src/eg/pure'"
+import="import { toBinary } from 'src/devBin/pure'"
 program="'12d=' + toBinary(12) + 'b'"
 
 echo "$import;$program" | $pm run repl

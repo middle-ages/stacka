@@ -22,8 +22,10 @@ suite('documented example', () => {
 
   const unsafeValue = 10 ** 6;
 
-  test('unsafe crashes', () => blowsStack(() => unsafe(unsafeValue)));
+  suite.skip('State.sequenceArray', () => {
+    test('unsafe crashes', () => blowsStack(() => unsafe(unsafeValue)));
 
-  test('safe does not crash', () =>
-    assert.doesNotThrow(() => safe(unsafeValue)));
+    test('safe does not crash', () =>
+      assert.doesNotThrow(() => safe(unsafeValue)));
+  });
 });

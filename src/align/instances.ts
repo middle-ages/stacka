@@ -1,4 +1,5 @@
 import {
+  eq as EQ,
   function as FN,
   number as NU,
   ord as OD,
@@ -10,7 +11,7 @@ import { curry2 } from 'fp-ts-std/Function';
 import { min } from 'fp-ts/lib/Ord';
 import { zip } from 'util/array';
 import { ordStruct } from 'util/fp-ts';
-import { BinOp, Unary } from 'util/function';
+import { BinOp, Unary, uncurry2T } from 'util/function';
 import { typedFromEntries } from 'util/object';
 import { Align, hAlign, HAlign, vAlign, VAlign } from './types';
 
@@ -46,16 +47,16 @@ const zipIndex = zip([0, 1, 2]),
     v => vAlignIndex[v],
   ];
 
-export const showAlign: SH.Show<Align> = {
+const Show: SH.Show<Align> = {
   show: ({ horizontal, vertical }) => alignSym[vertical][horizontal],
 };
 
-export const [hAlignOrd, vAlignOrd]: [OD.Ord<HAlign>, OD.Ord<VAlign>] = [
+const [hAlignOrd, vAlignOrd]: [OD.Ord<HAlign>, OD.Ord<VAlign>] = [
   FN.pipe(NU.Ord, OD.contramap(hIdx)),
   FN.pipe(NU.Ord, OD.contramap(vIdx)),
 ];
 
-export const alignOrd: OD.Ord<Align> = FN.pipe(
+const ord: OD.Ord<Align> = FN.pipe(
   {
     horizontal: hAlignOrd,
     vertical: vAlignOrd,
@@ -63,9 +64,19 @@ export const alignOrd: OD.Ord<Align> = FN.pipe(
   FN.pipe(OD.getMonoid<Align>(), ordStruct),
 );
 
-export const alignEq: Unary<Align, PRE.Predicate<Align>> = curry2(
-  alignOrd.equals,
-);
+const equals: Unary<Align, PRE.Predicate<Align>> = curry2(ord.equals),
+  eq: EQ.Eq<Align> = EQ.fromEquals(uncurry2T(equals));
 
 /** Select the `Align` that sorts first */
-export const minSortedAlign: BinOp<Align> = min(alignOrd);
+const minSorted: BinOp<Align> = min(ord);
+
+export const exportInstances = {
+  Show,
+  show: Show.show,
+  hAlignOrd,
+  vAlignOrd,
+  ord,
+  minSorted,
+  equals,
+  eq,
+} as const;

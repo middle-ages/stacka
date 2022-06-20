@@ -1,6 +1,6 @@
 import { either as EI } from 'fp-ts';
 import { pipe } from 'fp-ts/lib/function';
-import { Lazy } from './function';
+import { Lazy, Unary } from './function';
 
 const _tag = Symbol();
 
@@ -11,6 +11,8 @@ export interface Tco<T> {
   _tag: typeof _tag;
   wrapped: Wrapped<T>;
 }
+
+export type Tailcall<T> = Unary<T, Tco<T>>;
 
 const wrap = <T>(wrapped: Wrapped<T>): Tco<T> => ({ _tag, wrapped });
 
@@ -37,7 +39,7 @@ export const delay = <T>(thunk: Lazy<Tco<T>>): Tco<T> =>
  * //          ↑↑
  * //          must not recurse, instead returns lazy recursion
  *
- *   return flow(factorial, tco)(n, 1);
+ *   return FN.flow(factorial, tco)(n, 1);
  * };
  *
  * const unsafeFactorial: Endo<number> = n =>

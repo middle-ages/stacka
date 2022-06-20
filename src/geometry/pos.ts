@@ -1,101 +1,131 @@
+import * as fc from 'fast-check';
 import {
   array as AR,
+  eq as EQ,
   function as FN,
   monoid as MO,
   number as NU,
   ord as OD,
   predicate as PRE,
-  readonlyArray as RA,
   show as SH,
-  tuple as TU,
 } from 'fp-ts';
-import { join } from 'fp-ts-std/Array';
-import { curry2, flip, fork } from 'fp-ts-std/Function';
-import { add, negate } from 'fp-ts-std/Number';
-import { Lens } from 'monocle-ts/lib/Lens';
-import { monoOrdStruct } from 'util/fp-ts';
-import { Binary, BinaryC, BinOpC, Unary, uncurry2T } from 'util/function';
-import { lensAt } from 'util/lens';
-import { format, max, min } from 'util/number';
-import {
-  GetterOf,
-  ModifierOf,
-  modPropOf,
-  setPropOf,
-  SetterOf,
-  typedValues,
-} from 'util/object';
-import { Pair, pairCartesian, pairMap, Tuple4 } from 'util/tuple';
-import { incSize, size, Size } from './size';
+import { curry2 } from 'fp-ts-std/Function';
+import { add as plus, subtract } from 'fp-ts-std/Number';
+import { mapBoth, withFst, withSnd } from 'fp-ts-std/Tuple';
+import * as LE from 'monocle-ts/lib/Lens';
+import { Binary, BinOp, BinOpC, BinOpT, Endo, Unary } from 'util/function';
+import { modLens } from 'util/lens';
+import { typedValues } from 'util/object';
+import { Pair, pairCartesian } from 'util/tuple';
+import { build as buildSize, inc as incSize, Size } from './size';
 
-export type Pos = Record<typeof posKeys[number], number>;
+export const keys = ['top', 'left'] as const;
 
-export type GetExtrema = Unary<Pos[], Pos>;
+export type PosKey = typeof keys[number];
+export type Pos = Record<PosKey, number>;
 
-const mod = modPropOf<Pos>();
+//#region build
+export const build: Binary<number, number, Pos> = (top, left) => ({
+    top,
+    left,
+  }),
+  tupled = FN.tupled(build),
+  fromTop: Unary<number, Pos> = FN.flow(withSnd(0), tupled),
+  fromLeft: Unary<number, Pos> = FN.flow(withFst(0), tupled),
+  [unit, origin] = [build(1, 1), build(0, 0)];
+//#endregion
 
-export const posKeys = ['top', 'left'] as const,
-  pos: Binary<number, number, Pos> = (top, left) => ({ top, left }),
-  posT: Unary<Pair<number>, Pos> = FN.tupled(pos),
-  posC: BinaryC<number, number, Pos> = curry2(pos),
-  squarePos: Unary<number, Pos> = n => pos(n, n),
-  fromTop: Unary<number, Pos> = FN.pipe(0, flip(posC)),
-  fromLeft: Unary<number, Pos> = posC(0),
-  posPair: Unary<Pos, Pair<number>> = typedValues,
-  origin: Pos = pos(0, 0),
-  posTopLens: Lens<Pos, number> = lensAt<Pos>()('top'),
-  posLeftLens: Lens<Pos, number> = lensAt<Pos>()('left'),
-  posTop: GetterOf<Pos, 'top'> = posTopLens.get,
-  posLeft: GetterOf<Pos, 'left'> = posLeftLens.get,
-  setPosTop: SetterOf<Pos, 'top'> = setPropOf<Pos>()('top'),
-  setPosLeft: SetterOf<Pos, 'left'> = setPropOf<Pos>()('left'),
-  modPosTop: ModifierOf<Pos, 'top'> = mod('top'),
-  modPosLeft: ModifierOf<Pos, 'left'> = mod('left'),
-  flipPosH = FN.pipe(negate, mod('left')),
-  flipPosV = FN.pipe(negate, mod('top')),
-  flipPos = FN.flow(flipPosH, flipPosV),
-  addTop: SetterOf<Pos, 'top'> = FN.flow(add, modPosTop),
-  addLeft: SetterOf<Pos, 'left'> = FN.flow(add, modPosLeft),
-  subTop: SetterOf<Pos, 'top'> = FN.flow(negate, add, modPosTop),
-  subLeft: SetterOf<Pos, 'left'> = FN.flow(negate, add, modPosLeft),
-  addPos: BinOpC<Pos> = ({ top, left }) => FN.flow(addTop(top), addLeft(left)),
-  subPos: BinOpC<Pos> = FN.flow(flipPos, addPos),
-  posTopTo: BinOpC<Pos> = FN.flow(posTop, setPosTop),
-  posLeftTo: BinOpC<Pos> = FN.flow(posLeft, setPosLeft),
-  posOrd: OD.Ord<Pos> = FN.pipe(posKeys, monoOrdStruct(NU.Ord)),
-  posEq = curry2(posOrd.equals),
-  isOrigin: PRE.Predicate<Pos> = posEq(origin);
+//#region query
+const lens = LE.id<Pos>();
 
-const [minTop, minLeft, maxTop, maxLeft] = FN.pipe(
-  [
-    [posTopLens, posLeftLens],
-    [min, max],
-  ] as const,
-  pairCartesian,
-  RA.map(([lens, op]) => FN.flow(AR.map(lens.get), op)),
-) as Tuple4<Unary<Pos[], number>>;
+export const top = FN.pipe(lens, LE.prop('top'), modLens),
+  left = FN.pipe(lens, LE.prop('left'), modLens);
 
-export const minPos: Unary<Pos[], Pos> = FN.flow(fork([minTop, minLeft]), posT),
-  maxPos: Unary<Pos[], Pos> = FN.flow(fork([maxTop, maxLeft]), posT);
+export const pair: Unary<Pos, Pair<number>> = typedValues,
+  sizeFromOrigin: Unary<Pos, Size> = ({ top, left }) =>
+    buildSize(left + 1, top + 1),
+  bottomRight: Unary<Size, Pos> = ({ width, height }) =>
+    build(height - 1, width - 1);
+//#endregion
 
-export const showPos: SH.Show<Pos> = {
-  show: FN.flow(typedValues, pairMap(format), join(':')),
+//#region instances
+const maxPosNat = fc.nat(100);
+
+export const getMonoid: Unary<MO.Monoid<number>, MO.Monoid<Pos>> = (
+  monoid: MO.Monoid<number>,
+) => MO.struct({ top: monoid, left: monoid });
+
+export const monoid: Record<'sum' | 'max', MO.Monoid<Pos>> = {
+  max: FN.pipe(NU.Bounded, MO.max, getMonoid),
+  sum: getMonoid(NU.MonoidSum),
 };
 
-export const posMonoid: MO.Monoid<Pos> = {
-  empty: origin,
-  concat: uncurry2T(addPos),
+export const ord: Record<PosKey, OD.Ord<Pos>> = {
+    top: FN.pipe(NU.Ord, OD.contramap(top.get)),
+    left: FN.pipe(NU.Ord, OD.contramap(left.get)),
+  },
+  eq: EQ.Eq<Pos> = {
+    equals: (fst, snd) => ord.top.equals(fst, snd) && ord.left.equals(fst, snd),
+  },
+  show: SH.Show<Pos> = {
+    show: ({ top, left }) => `▲${top}:◀${left}`,
+  },
+  arb: fc.Arbitrary<Pos> = fc.record({ top: maxPosNat, left: maxPosNat });
+//#endregion
+
+//#region modify
+export const [addTop, addLeft] = [
+    FN.flow(plus, top.mod),
+    FN.flow(plus, left.mod),
+  ],
+  [subTop, subLeft] = [FN.flow(subtract, top.mod), FN.flow(subtract, left.mod)],
+  [add, sub]: Pair<BinOp<Pos>> = [
+    monoid.sum.concat,
+    (fst, { top, left }) => FN.pipe(fst, subTop(top), subLeft(left)),
+  ],
+  [subT, subC] = [FN.tupled(sub), curry2(sub)],
+  [addT, addC]: [BinOpT<Pos>, BinOpC<Pos>] = [FN.tupled(add), curry2(add)],
+  [addSize, subSize]: Pair<Unary<Size, Endo<Pos>>> = [
+    FN.flow(bottomRight, addC),
+    FN.flow(incSize, bottomRight, subC),
+  ],
+  [inc, dec]: Pair<Endo<Pos>> = [addC(unit), subC(unit)];
+//#endregion
+
+//#region query
+export const isOrigin: PRE.Predicate<Pos> = FN.pipe(origin, curry2(eq.equals)),
+  [minTop, minLeft, maxTop, maxLeft] = FN.pipe(
+    [
+      [ord.top, ord.left],
+      [OD.min, OD.max],
+    ] as const,
+    pairCartesian,
+    AR.map(
+      ([order, cmp]) =>
+        (fst: Pos, ...rest: Pos[]): Pos =>
+          FN.pipe(rest, AR.reduce(fst, cmp(order))),
+    ),
+  ),
+  min = (fst: Pos, ...rest: Pos[]) =>
+    build(minTop(fst, ...rest).top, minLeft(fst, ...rest).left),
+  max = (fst: Pos, ...rest: Pos[]) =>
+    build(maxTop(fst, ...rest).top, maxLeft(fst, ...rest).left),
+  rectSize: Unary<Pair<Pos>, Size> = ([tl, br]: Pair<Pos>) => {
+    const { top, left } = sub(br, tl);
+    return buildSize(Math.abs(left) + 1, Math.abs(top) + 1);
+  };
+
+/**
+ * Convert a  set of positions so that all coordinates are positive while keeping
+ * the same distances between the positions.
+ *
+ * Origin is at top left and axes go right and down.
+ */
+export const translateToPositive = (fst: Pos, ...rest: Pos[]): Pos[] => {
+  const computeDelta: Endo<number> = coord => (coord >= 0 ? 0 : -1 * coord),
+    topLeft = min(fst, ...rest),
+    delta = FN.pipe(topLeft, pair, mapBoth(computeDelta), tupled);
+
+  return FN.pipe([fst, ...rest], FN.pipe(delta, addC, AR.map));
 };
-
-export const sizeFromOrigin: Unary<Pos, Size> = FN.flow(
-  posPair,
-  // top/left ⇒ width/height
-  TU.swap,
-  size,
-  incSize,
-);
-
-export const sizeFromCorners: Unary<Pair<Pos>, Size> = ([
-  topLeft,
-  bottomRight,
-]) => FN.pipe(bottomRight, subPos(topLeft), sizeFromOrigin);
+//#endregion

@@ -26,7 +26,7 @@ import {
   PreorderId,
   preorderId,
 } from '../transform';
-import { getNodes, Tree, tree } from '../TreeF';
+import { nodes, Tree, tree } from 'util/tree';
 
 type StrTree = IdTree<string>;
 type State = TreeState<string>;
@@ -45,8 +45,8 @@ suite('idTree', () => {
   );
 
   const iut: StrTree = FN.pipe(state, ST.evaluate(100)),
-    level1 = FN.pipe(iut, getNodes, head),
-    level2 = FN.pipe(level1, getNodes, head);
+    level1 = FN.pipe(iut, nodes<Identified<string>>().get, head),
+    level2 = FN.pipe(level1, nodes<Identified<string>>().get, head);
 
   suite('getId', () => {
     const checkId = (name: string, iut: StrTree, expect: number) =>

@@ -3,13 +3,34 @@ import { flip, uncurry2 } from 'fp-ts-std/Function';
 import { BinaryC, Unary } from 'util/function';
 import { typedFromEntries } from 'util/object';
 import { ucFirst } from 'util/string';
-import { squareMapFst } from 'util/tuple';
+import { Pair } from 'util/tuple';
+import { HDir, VDir } from 'src/geometry';
+import { toFst } from 'fp-ts-std/Tuple';
 
 export const hAlign = ['left', 'center', 'right'] as const,
   vAlign = ['top', 'middle', 'bottom'] as const;
 
 export type HAlign = typeof hAlign[number];
 export type VAlign = typeof vAlign[number];
+
+/** A horizontal or vertical alignment */
+export type OrientAlign = HAlign | VAlign;
+
+/** A pair of `OrientAlign`s on same orientation, possibly identical */
+export type OrientPair = Pair<HAlign> | Pair<VAlign>;
+
+/** A horizontal dir + vertical alignment, E.g.: `['left','top'] */
+export type HAlignPair = [HDir, VAlign];
+
+/** A vertical dir + horizontal alignment, E.g.: `['bottom','center'] */
+export type VAlignPair = [VDir, HAlign];
+
+/** A pair of dir + orthogonal (to the dir) alignment */
+export type AlignPair = HAlignPair | VAlignPair;
+
+export type DupAlign<A extends OrientAlign> = A extends HAlign
+  ? Pair<HAlign>
+  : Pair<VAlign>;
 
 export interface Align {
   horizontal: HAlign;
@@ -50,7 +71,7 @@ export type Alignments = Record<Alignment, Align>;
 export const alignments: Alignments = FN.pipe(
   vAlign,
   RA.chain(v =>
-    FN.pipe(hAlign, RA.map(FN.flow(vhAlign(v), squareMapFst(toAlignment)))),
+    FN.pipe(hAlign, RA.map(FN.flow(vhAlign(v), toFst(toAlignment)))),
   ),
   typedFromEntries,
 );

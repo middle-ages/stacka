@@ -1,4 +1,4 @@
-import { FunctionN, Lazy } from 'fp-ts/function';
+import { FunctionN } from 'fp-ts/function';
 import { Endomorphism } from 'fp-ts/lib/Endomorphism';
 import { Kind, URIS } from 'fp-ts/lib/HKT';
 
@@ -6,11 +6,9 @@ export type { Lazy, Predicate } from 'fp-ts/function';
 
 export type EndoOf<T> = <U extends T>(src: U) => U;
 export type Endo<T> = Endomorphism<T>;
-export type UnfoldOf<T extends {}> = <U extends T>(src: U) => U[];
-export type Unfold<T> = Unary<T, T[]>;
+export type NonEmptyEndo<T> = (fst: T, ...rest: T[]) => T[];
 
 export type Fn<A extends any[], B> = FunctionN<A, B>;
-export type Kestrel = <T>(o: T) => Lazy<T>;
 
 export type Unary<Q, R> = FunctionN<[Q], R>;
 export type UnaryRest<Q, R> = (...args: Q[]) => R;

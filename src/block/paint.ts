@@ -1,18 +1,28 @@
 import { function as FN } from 'fp-ts';
-import { Unary } from 'util/function';
-import { align } from '../align';
-import { RowList, RowMapper } from '../types';
-import { blockLens } from './lens';
+import { backdrop } from 'src/backdrop';
+import { Grid, grid } from 'src/grid';
+import { BinaryC, Endo, Unary } from 'util/function';
+import { Pair } from 'util/tuple';
+import * as BLE from './lens';
+import { withRect as RCT } from './rect';
 import { Block } from './types';
 
-/** Renders our data and aligns the result inside our rectangle */
-export const paint: Unary<Block, RowList> = b => {
-  const hAlign: RowMapper = FN.pipe(
-    b.size,
-    align.rowsWith(b.fillChar, b.align.horizontal),
-  );
+export const alignToSize: Unary<Block, Endo<Grid>> = b =>
+  FN.pipe(b, RCT.size.get, FN.pipe(b, BLE.align.get, grid.align));
 
-  const vAlign: RowMapper = FN.pipe(b.size, align.column(b.align.vertical));
+/** Render grid and align results inside a rectangle */
+export const paint: Unary<Block, Grid> = b => {
+  const size = RCT.size.get(b);
 
-  return FN.pipe(b, blockLens.rows.get, vAlign, hAlign);
+  const grids: Pair<Grid> = [
+    FN.pipe(size, FN.pipe(b, BLE.backdrop.get, backdrop.paint)),
+    FN.pipe(b.grid, alignToSize(b)),
+  ];
+
+  return FN.pipe(grids, FN.pipe(b, BLE.blend.get, grid.stack));
 };
+
+export const asStringsWith: BinaryC<string, Block, string[]> = s =>
+  FN.flow(paint, grid.asStringsWith(s));
+
+export const asStrings: Unary<Block, string[]> = asStringsWith(' ');

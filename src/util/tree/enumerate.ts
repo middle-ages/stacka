@@ -10,7 +10,7 @@ import { last } from 'util/array';
 import { BinaryC, Endo, Unary } from 'util/function';
 import { Pair } from 'util/tuple';
 import { EdgeList, fromEdgeList } from './idTree';
-import { Tree } from './TreeF';
+import { Tree } from './types';
 
 /** How many rooted planar trees with N nodes? */
 export const treeCountAt: Endo<number> = nodeCount =>

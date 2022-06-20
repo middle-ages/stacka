@@ -1,47 +1,13 @@
 import { function as FN } from 'fp-ts';
 import { uncurry2 } from 'fp-ts-std/Function';
-import {
-  Binary,
-  BinaryC,
-  Effect,
-  Endo,
-  EndoOf,
-  Kestrel,
-  Lazy,
-  PartialEndo,
-  Unary,
-} from './types';
+import { Binary, BinaryC, Lazy, Unary } from './types';
 
 export const apply0 = <T>(fn: Lazy<T>): T => fn();
+
 export const apply1 =
   <A>(a: A) =>
   <F extends Unary<A, any>>(fn: F): ReturnType<F> =>
     fn(a);
-
-export const λk: Kestrel = o => () => o;
-
-export const ensureValue =
-  <V extends {}>(v: V): PartialEndo<V> =>
-  x =>
-    x ?? v;
-
-export const tap =
-  <T>(f: Effect<T>): EndoOf<T> =>
-  o => {
-    f(o);
-    return o;
-  };
-
-export const invoke0 =
-  <T extends { [K in keyof T]: Lazy<any> }>() =>
-  <K extends keyof T>(k: K) =>
-  (o: T): ReturnType<T[K]> =>
-    o[k]();
-
-export const addEndo =
-  <A>(f: EndoOf<A>): Endo<EndoOf<A>> =>
-  g =>
-    FN.flow(f, g);
 
 /**
  * ```
@@ -66,3 +32,8 @@ export const callWith =
  */
 export type uncurry2T = <A, B, C>(f: BinaryC<A, B, C>) => Binary<A, B, C>;
 export const uncurry2T: uncurry2T = FN.flow(uncurry2, FN.untupled);
+
+/** A flipped curry for binary functions */
+export type curry2F = <A, B, C>(f: Binary<A, B, C>) => BinaryC<B, A, C>;
+
+export const curry2F: curry2F = f => b => a => f(a, b);

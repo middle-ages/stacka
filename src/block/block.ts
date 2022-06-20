@@ -1,42 +1,25 @@
-import { function as FN } from 'fp-ts';
-import { measureRowData } from '../geometry';
-import { buildBlock, builders } from './build';
-import { Show } from './instances';
-import { blockLens } from './lens';
-import { ops } from './ops';
-import { paint } from './paint';
+import * as build from './build';
+import * as instances from './instances';
+import * as lens from './lens';
+import * as paint from './paint';
+import * as rect from './rect';
+import * as types from './types';
+
+export type { Block, BlockArgs } from './types';
+export type { Lenses, LensKey } from './lens';
 
 const fns = {
-  ...builders,
-  ...blockLens,
-  ...ops,
-  Show,
-  show: Show.show,
-  paint,
-  measureBlock: FN.flow(blockLens.rows.get, measureRowData),
+  ...types,
+  ...build,
+  ...rect,
+  ...lens,
+  ...paint,
+  ...instances,
+  ...rect.withRect,
 } as const;
 
-export type block = typeof buildBlock & typeof fns;
+export type block = typeof build.build & typeof fns;
 
-export const block = buildBlock as block;
+export const block = build.build as block;
 
 Object.assign(block, fns);
-
-/*
-
-export const paintBlockOf = <T>(pa: Painter<T>): Painter<Block<T>> => {
-  const block = blockOf(pa);
-
-  return {
-    fillChar: pa.fillChar,
-    pos: block.pos.get,
-    size: block.size.get,
-    paint: block.paint,
-  };
-};
-
-export const paintRectBlock: Painter<Block<Rect>> = FN.pipe(
-  paintRect,
-  paintBlockOf,
-);
-*/

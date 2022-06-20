@@ -1,10 +1,11 @@
 import { array as AR, tuple as TU } from 'fp-ts';
 import { cartesian } from 'fp-ts-std/Array';
 import { until } from 'fp-ts-std/Function';
+import { toSnd } from 'fp-ts-std/Tuple';
 import { increment, pipe, tupled } from 'fp-ts/lib/function';
 import { blowsStack } from 'util/chai';
 import { Effect, Unary } from 'util/function';
-import { Pair, squareMapSnd } from 'util/tuple';
+import { Pair } from 'util/tuple';
 import { assert, suite, test } from 'vitest';
 import { deMorgan, falseValue, trueValue, xor } from './expr/eg';
 import { and, not, or } from './expr/ops';
@@ -33,7 +34,7 @@ suite('run', () => {
     const allDeMorgans: [Pair<Expr>, Expr][] = pipe(
       [T, F],
       cartesian([T, F]),
-      pipe(deMorgan, tupled, squareMapSnd, AR.map),
+      pipe(deMorgan, tupled, toSnd, AR.map),
     );
 
     allDeMorgans.forEach(([[l, r], e]) =>
