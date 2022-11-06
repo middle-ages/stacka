@@ -17,7 +17,7 @@ export interface LabeledConfig {
   vGap: number;
 }
 
-const defaultBorder = FN.pipe(BO.sets.dash.dot, BO.setFg('dark'));
+const defaultBorder = FN.pipe(BO.sets.dotted, BO.setFg('dark'));
 
 const config: Unary<Partial<LabeledConfig>, LabeledConfig> = ({
   horizontal = 'center',

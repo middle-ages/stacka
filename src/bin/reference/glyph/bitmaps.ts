@@ -1,6 +1,6 @@
-import { array as AR, function as FN } from 'fp-ts';
-import { unlines } from 'fp-ts-std/String';
-import { termSize, bitmap, BitmapRole } from 'src/stacka';
+//import { termSize, bitmap, BitmapRole } from 'src/stacka';
+import { termSize } from 'src/term';
+import { BitmapRole, bitmap } from 'src/bitmap';
 /**
  * With no arguments, shows all character bitmaps in every box drawing character
  * role.
@@ -30,10 +30,6 @@ const roles =
     ? (process.argv[2].split(',') as BitmapRole[])
     : allRoles;
 
-const report = FN.pipe(
-  roles,
-  FN.pipe(width, bitmap.roleReport, AR.mapWithIndex),
-  unlines,
-);
+const report = bitmap.rolesReport(width)(roles);
 
 console.log(report);

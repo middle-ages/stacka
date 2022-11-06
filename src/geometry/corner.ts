@@ -10,13 +10,13 @@ export const all = [
   'bottomRight',
 ] as const;
 
-export type Corners = typeof all;
-
-export type Corner = Corners[number];
+export type Corner = typeof all[number];
 
 export type Cornered<T> = Record<Corner, T>;
 
-export const sym: Cornered<string> = {
+export type Corners = Cornered<string>;
+
+export const sym: Corners = {
   topLeft: '↖',
   topRight: '↗',
   bottomLeft: '↙',
@@ -33,5 +33,19 @@ export const [map, zip] = [
   <R>(f: Unary<Corner, R>) => FN.pipe(all, RA.map(f)) as Tuple4<R>,
   <R>(r: Tuple4<R>) => FN.pipe(all, RA.zip(r)) as Tuple4<[Corner, R]>,
 ];
+
+export const fromTuple = <T>([
+  topLeft,
+  topRight,
+  bottomLeft,
+  bottomRight,
+]: Tuple4<T>): Cornered<T> => ({
+  topLeft,
+  topRight,
+  bottomLeft,
+  bottomRight,
+});
+
+export const singleton = <T>(t: T): Cornered<T> => fromTuple([t, t, t, t]);
 
 export const show: SH.Show<Corner> = { show: corner => sym[corner] };

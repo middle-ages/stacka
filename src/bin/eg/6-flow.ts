@@ -1,56 +1,54 @@
-import {
-  array as AR,
-  function as FN,
-  nonEmptyArray as NEA,
-  random as RN,
-} from 'fp-ts';
-import * as io from 'fp-ts/lib/IO';
-import { IO } from 'fp-ts/lib/IO';
-import { border, Box, box, boxes, FlowConfig, termWidth } from 'src/stacka';
+import { nonEmptyArray as NEA } from 'fp-ts';
+import { flow, pipe } from 'fp-ts/function';
+import { block, border, Box, box, boxes, color } from 'src/stacka';
 
-/** Shows how to use `boxes.flow` and how to mark clipped boxes */
+/**
+ * Demo of `boxes.flow` and marking clipped boxes
+ *
+ * 10 boxes are drawn, each wider than the previous, starting at `width=5` and
+ * ending at `width=32`, with jumps of `3` between widths. These are the
+ * _parents_.
+ *
+ * Inside each parent 10 child boxes are drawn. Again each is wider than the
+ * previous, ranging from 1 to 10.
+ *
+ * The parents are _flow_ boxes, so child boxes will flow if they don't fit.
+ *
+ * Sometimes the child box cannot fit the parent _at all_, even if we start a
+ * new row. We use to the `clipMark` field of the `FlowConfig` to highlight
+ * these boxes.
+ */
 
-const flowConfig: Partial<FlowConfig> = {
-  placeH: box.catSnugRightOfTop,
-  placeV: box.catSnugBelow,
-  hGap: -1,
-  clipMark: box.setSolidBg('red'),
-};
-
-const rndCount = RN.randomInt(1, 20),
-  rndChildWidth = RN.randomInt(4, 16),
-  rndParentWidth = RN.randomInt(3, Math.floor(termWidth() / 3)),
-  rndWidths = (count: number): IO<readonly number[]> =>
-    FN.pipe(AR.replicate(count, rndChildWidth), io.sequenceArray);
-
-const node = (width: number): Box =>
-  FN.pipe(
-    NEA.range(1, width)
+const nDigits = (n: number): string =>
+  pipe(
+    NEA.range(0, n)
       .map(s => s.toString())
       .join(''),
-    box.fromRow,
-    border.line,
+    color.fg(color.hex('#69a')),
   );
 
-const outerBorder = FN.pipe(border.sets.thick, border.setFg('dark'), border);
+const child: (idx: number) => Box = flow(nDigits, box.fromRow, border.hMcGugan);
 
-const flowBox: IO<Box> = FN.pipe(
-  rndCount,
-  io.chain(rndWidths),
-  io.map(widths => FN.pipe([...widths], AR.map(node))),
-  io.chain(bxs =>
-    FN.pipe(
-      rndParentWidth,
-      io.map(available =>
-        FN.pipe(bxs, boxes.flow.of({ ...flowConfig, available }), outerBorder),
-      ),
-    ),
-  ),
-);
+const parent = (width: number): Box =>
+  pipe(
+    NEA.range(0, 9),
+    NEA.map(child),
+    boxes.flow.of({
+      placeH: box.catRightOfTop,
+      placeV: box.catBelow,
+      clipMark: pipe('darkRed', block.setGridFg, box.mapBlock),
+      available: 3 * width + 2,
+    }),
+    border.withFg('line', 'dark'),
+  );
 
-FN.pipe(
-  NEA.range(1, 12),
-  NEA.map(flowBox),
-  boxes.win.flow.of(flowConfig),
+pipe(
+  NEA.range(1, 10),
+  NEA.map(parent),
+  boxes.win.flow.of({
+    placeH: box.catSnugRightOfTop,
+    placeV: box.catSnugBelow,
+    hGap: -1,
+  }),
   box.print,
 );

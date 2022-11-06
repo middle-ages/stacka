@@ -1,8 +1,7 @@
-import { array as AR, function as FN, predicate as PRE } from 'fp-ts';
-import { dup } from 'fp-ts-std/Tuple';
+import { array as AR, function as FN } from 'fp-ts';
+import { dup, toSnd } from 'fp-ts-std/Tuple';
 import { Unary } from 'util/function';
 import { typedFromEntries, typedKeys } from 'util/object';
-import { toSnd } from 'fp-ts-std/Tuple';
 import { Matrix, parse } from './data';
 import { cross } from './data/cross';
 import { elbow } from './data/elbow';
@@ -37,32 +36,3 @@ const parseRole: Unary<BitmapRole, [string, Matrix][]> = role =>
 
 export const parseRoles: FN.Lazy<[BitmapRole, [string, Matrix][]][]> = () =>
   FN.pipe(bitmapRoles, FN.pipe(parseRole, toSnd, AR.map));
-
-export const matchRole =
-  <A>(a: A) =>
-  <R>({
-    hLine,
-    vLine,
-    elbow,
-    hTee,
-    vTee,
-    cross,
-    halftone,
-  }: Record<BitmapRole, Unary<A, R>>): Unary<BitmapRole, R> =>
-  role =>
-    role === 'hLine'
-      ? hLine(a)
-      : role === 'vLine'
-      ? vLine(a)
-      : role === 'elbow'
-      ? elbow(a)
-      : role === 'hTee'
-      ? hTee(a)
-      : role === 'vTee'
-      ? vTee(a)
-      : role === 'cross'
-      ? cross(a)
-      : halftone(a);
-
-export const isLineRole: PRE.Predicate<BitmapRole> = role =>
-  role === 'hLine' || role === 'vLine';

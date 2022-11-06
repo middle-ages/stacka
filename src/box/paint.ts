@@ -14,8 +14,7 @@ const prepareNodes: Unary<[Box, Grid][], Grid[]> = unsorted => {
   if (unsorted.length === 0) return [];
 
   const [sorted, grids] = FN.pipe(unsorted, NO.sortZOrder, AR.unzip),
-    [headBox, ...tailBoxes] = sorted,
-    normalized = RCT.translateToPositive(headBox, ...tailBoxes),
+    normalized = RCT.translateToPositive(sorted),
     bounds = NO.bounds(normalized);
 
   const expand: Unary<[Box, Grid], Grid> = ([b, g]) =>

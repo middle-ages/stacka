@@ -3,7 +3,7 @@ import { toSnd } from 'fp-ts-std/Tuple';
 import { makeRegistry as makeBitmapRegistry } from 'src/bitmap/registry';
 import { glyph } from 'src/stacka';
 import { computePairs } from 'src/glyph/relation';
-import { Pair } from 'src/util/tuple';
+import { Pair } from 'util/tuple';
 
 const bitmapRegistry = makeBitmapRegistry();
 

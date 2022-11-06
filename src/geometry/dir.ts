@@ -5,9 +5,10 @@ import {
   show as SH,
 } from 'fp-ts';
 import { dup } from 'fp-ts-std/Tuple';
+import { Orient, Orientation, Oriented } from './orientation';
+import { picksT } from 'util/object';
 import { Unary } from 'util/function';
 import { Pair, Tuple4 } from 'util/tuple';
-import { Orientation } from 'src/geometry';
 
 export const horizontal = ['left', 'right'] as const,
   vertical = ['top', 'bottom'] as const,
@@ -26,11 +27,60 @@ export const orientDirs = <O extends Orientation>(o: O) =>
 export type Dirs = typeof all;
 export type Dir = Dirs[number];
 export type Directed<T> = Record<Dir, T>;
+export type Direct = Directed<string>;
 
 export type Horizontal = typeof horizontal;
 export type HDir = Horizontal[number];
 export type Vertical = typeof vertical;
 export type VDir = Vertical[number];
+
+export const isDirect = (c: Orient | Direct): c is Direct => 'top' in c;
+
+/**
+ * Filter out all entries except those keyed by `top`, `right`, `bottom`, or
+ * `left`
+ */
+export const pickDirs =
+  <T>() =>
+  <D extends Directed<T>>(d: D): Directed<T> =>
+    picksT(all)(d);
+
+/**
+ * Convert an object of type `{horizontal: T, vertical: T}` to an object of
+ * type: `{top: T, right: T, bottom: T, left: T}`. Horizontal values go to
+ * the horizontal directions left & right and vertical to the vertical
+ * directions top & bottom.
+ */
+export const fromOriented =
+  <T>() =>
+  <O extends Oriented<T>>({ horizontal, vertical }: O): Directed<T> => ({
+    top: horizontal,
+    right: vertical,
+    bottom: horizontal,
+    left: vertical,
+  });
+
+/** Flip the horizontal entries left ⇒ right & right ⇒ left */
+export const hFlip =
+    <T>() =>
+    <D extends Directed<T>>({ right, left, ...rest }: D): Directed<T> => ({
+      right: left,
+      left: right,
+      ...rest,
+    }),
+  /** Flip the vertical entries top ⇒ bottom & bottom ⇒ top */
+  vFlip =
+    <T>() =>
+    <D extends Directed<T>>({ top, bottom, ...rest }: D): Directed<T> => ({
+      top: bottom,
+      bottom: top,
+      ...rest,
+    }),
+  /** Flip horizontal and vertical entries: top ↔ bottom and left ↔ right */
+  flip =
+    <T>() =>
+    <D extends Directed<T>>(d: D): Directed<T> =>
+      FN.pipe(d, hFlip<T>(), vFlip<T>());
 
 const reversedDirMap = {
   top: 'bottom',

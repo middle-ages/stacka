@@ -10,16 +10,16 @@ const sets = border.sets;
 
 const borders: [Color, Border][] = [
   ['white', sets.near],
-  ['white', sets.halfSolid.near],
-  ['lightGrey', sets.halfSolid.far],
-  ['lightGrey', sets.halfSolid.near],
+  ['white', sets.halfSolidNear],
+  ['lightGrey', sets.halfSolidFar],
+  ['lightGrey', sets.halfSolidNear],
   ['grey', sets.space],
-  ['darkGrey', sets.halfSolid.near],
+  ['darkGrey', sets.halfSolidNear],
   ['darkerGrey', sets.space],
   ['darkestGrey', sets.near],
   ['dark', sets.line],
   ['darker', sets.space],
-  ['darkest', sets.dash.dot],
+  ['darkest', sets.dotted],
 ];
 
 // a list of borders to be nested

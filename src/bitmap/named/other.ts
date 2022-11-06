@@ -17,9 +17,6 @@ export const tee = {
   },
 } as const;
 
-export const space = ' ' as const,
-  solid = '█' as const,
-  cross = '┼' as const;
-
-export type Solid = typeof solid;
-export type Space = typeof space;
+export const cross = '┼',
+  space = ' ' as const,
+  solid = '█' as const;

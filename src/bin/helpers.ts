@@ -2,14 +2,10 @@ import { function as FN, option as OP } from 'fp-ts';
 import { toSnd } from 'fp-ts-std/Tuple';
 import { border, box, Box, boxes, color, MaybeColor } from 'src/stacka';
 
-export const addDarkBorder = FN.pipe(
-  border.sets.dash.dot,
-  border.setFg('dark'),
-  border,
-);
+export const addDarkBorder = border.withFg('dotted', 'dark');
 
 const [outerBorder, outerBorderWidth] = FN.pipe(
-  border.sets.halfSolid.near,
+  border.sets.halfSolidNear,
   border.setColor(['lighterGrey', 'darker']),
   toSnd(border.width),
 );
@@ -45,9 +41,7 @@ const blendSnug =
       box.maybeSolidBg(bg),
     );
 
-/**
- * Layout given boxes according to string width and add label on top
- */
+/** Layout given boxes and add a label on top */
 export const colorGallery =
   (gap: number, bg: MaybeColor) =>
   (label: string) =>

@@ -1,16 +1,11 @@
 import { function as FN, readonlyArray as RA, show as SH } from 'fp-ts';
 import { dup } from 'fp-ts-std/Tuple';
-import { mapValues } from 'util/object';
 import { Endo, Unary } from 'util/function';
 import { Pair, Tuple3, TupleN } from 'util/tuple';
-import { Corner, show as showCorner } from './corner';
-import {
-  check as checkDir,
-  Dir,
-  match as matchDir,
-  show as showDir,
-  snug as snugDir,
-} from './dir';
+import * as corner from './corner';
+import { Corner } from './corner';
+import * as dir from './dir';
+import { Dir } from './dir';
 
 const all = [
   'topLeft',
@@ -31,19 +26,19 @@ export const value = FN.pipe(all, RA.map(dup), Object.fromEntries) as {
   [K in BorderDir]: K;
 };
 
-export const singleton = <A>(a: A) =>
-    FN.pipe(a, FN.constant, mapValues<BorderDir, A>),
+export const singleton = <T>(t: T): Bordered<T> => ({
+    ...dir.singleton(t),
+    ...corner.singleton(t),
+  }),
   sym: Unary<BorderDir, string> = bd =>
-    checkDir(bd) ? showDir.show(bd) : showCorner.show(bd);
+    dir.check(bd) ? dir.show.show(bd) : corner.show.show(bd);
 
 export const map = <R>(f: Unary<BorderDir, R>) =>
     FN.pipe(all, RA.map(f)) as TupleN<R, 8> & R[],
   modAt =
     <A>(f: Endo<A>): Unary<BorderDir, Endo<Bordered<A>>> =>
     dir =>
-    direct => ({ ...direct, [dir]: f(direct[dir]) }),
-  associate = <R>(f: Unary<BorderDir, R>): Bordered<R> =>
-    FN.pipe(value, mapValues(f));
+    direct => ({ ...direct, [dir]: f(direct[dir]) });
 
 export const [isHorizontal, isVertical] = [
     (o: BorderDir): o is 'left' | 'right' => o === 'left' || o === 'right',
@@ -60,7 +55,7 @@ export const [isHorizontal, isVertical] = [
   ];
 
 /**  What are the 3 border dirs required to show a border at a direction? */
-export const snugBorderDirs: Unary<Dir, Tuple3<BorderDir>> = matchDir(
+export const snugBorderDirs: Unary<Dir, Tuple3<BorderDir>> = dir.match(
   ['topLeft', 'top', 'topRight'],
   ['topRight', 'right', 'bottomRight'],
   ['bottomLeft', 'bottom', 'bottomRight'],
@@ -79,7 +74,7 @@ export const snugCorners: Unary<Dir, Pair<Corner>> = dir => {
  */
 export const snug = (d: Dir) => {
   const [preCorner, postCorner] = snugCorners(d),
-    [pre, post] = snugDir(d);
+    [pre, post] = dir.snug(d);
 
   return [pre, preCorner, d, postCorner, post] as TupleN<BorderDir, 5>;
 };

@@ -1,6 +1,6 @@
 import { array as AR, function as FN, nonEmptyArray as NEA } from 'fp-ts';
 import { test } from 'fp-ts-std/String';
-import { Tuple4 } from 'src/util/tuple';
+import { Tuple4 } from 'util/tuple';
 import { Unary } from 'util/function';
 import {
   Hex,

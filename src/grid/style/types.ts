@@ -1,7 +1,7 @@
 import { array as AR, function as FN, option as OP } from 'fp-ts';
 import { withSnd } from 'fp-ts-std/Tuple';
 import { MaybeColor } from 'src/color';
-import { typedFromEntries } from 'src/util/object';
+import { typedFromEntries } from 'util/object';
 
 const _decorations = [
   'bold',

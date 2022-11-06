@@ -6,8 +6,10 @@ import { Pair } from 'util/tuple';
 import { chopAtMostLeft, chopAtMostRight } from './chopAtMost';
 import { emptyN, Row } from './types';
 
-export const maxRowWidth: Unary<Row[], number> = rows =>
-  Math.max(...FN.pipe(rows, AR.map(AR.size)));
+export const maxRowWidth: Unary<Row[], number> = rows => {
+  const sizes = rows.map(row => row.length);
+  return Math.max(...sizes);
+};
 
 /**
  * Expand given row to the left & right, with empty cells, according to given
@@ -16,7 +18,7 @@ export const maxRowWidth: Unary<Row[], number> = rows =>
 export const expandRow: Unary<Pair<number>, Endo<Row>> =
   ([left, right]) =>
   row =>
-    [...emptyN(left), ...row, ...emptyN(right)];
+    emptyN(left).concat(row, emptyN(right));
 
 /**
  * Drop exactly the given number of cells from row left, chopping up wide
@@ -24,13 +26,13 @@ export const expandRow: Unary<Pair<number>, Endo<Row>> =
  */
 export const dropLeftWidth: Unary<number, Endo<Row>> = drop => row => {
   const { right, delta } = FN.pipe(row, chopAtMostLeft(drop));
-  return [...right, ...emptyN(delta)];
+  return right.concat(emptyN(delta));
 };
 
 /** Same as `dropLeftWidth` but from the right side of the row */
 export const dropRightWidth: typeof dropLeftWidth = drop => row => {
   const { left, delta } = FN.pipe(row, chopAtMostRight(drop));
-  return [...emptyN(delta), ...left];
+  return emptyN(delta).concat(left);
 };
 
 /**

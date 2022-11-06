@@ -1,14 +1,17 @@
+import { line } from './named/line';
 import * as elbow from './named/elbow';
-import { line, dash } from './named/line';
+import * as classify from './named/classify';
 import * as other from './named/other';
+import * as types from './named/types';
 
-export * from './named/types';
-export type { Solid } from './named/other';
-export type {
-  HNearLine,
-  VNearLine,
-  HCornerLine,
-  VCornerLine,
-} from './named/line';
+export type { BasicGroup, ElbowGroup, LineGroup } from './named/types';
 
-export const named = { line, dash, ...elbow, ...other } as const;
+export const named = {
+  line,
+  dash: line.dash,
+  ...elbow,
+  ...classify,
+  ...elbow,
+  ...other,
+  ...types,
+} as const;

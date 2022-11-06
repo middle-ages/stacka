@@ -2,7 +2,7 @@ import { array as AR, function as FN } from 'fp-ts';
 import * as LE from 'monocle-ts/lib/Lens';
 import * as BL from 'src/block';
 import * as GE from 'src/geometry';
-import { Unary } from 'src/util/function';
+import { Unary } from 'util/function';
 import { ModLens, modLens } from 'util/lens';
 import * as BLE from './block';
 import { Box } from './types';
@@ -24,9 +24,7 @@ const maxWidth: Unary<Box[], number> = FN.flow(
 export const exportRect = {
   rect,
 
-  ...block.rectShift(rect),
-  ...block.rectLenses(rect),
-  ...block.eqs(rect.get),
+  ...block.delegateRect(rect),
 
   incZOrder: boxBlock.mod(block.incZOrder),
   decZOrder: boxBlock.mod(block.decZOrder),
@@ -38,7 +36,8 @@ export const exportRect = {
 
   translateToPositive: block.translateToPositiveFor(rect),
   minTopLeft: block.minTopLeft,
-  maxBottomRight: block.maxBottomRight,
+  incSize: boxBlock.mod(block.incSize),
+  decSize: boxBlock.mod(block.incSize),
 
   maxWidth,
 } as const;

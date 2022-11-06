@@ -19,7 +19,7 @@ suite('pos', () => {
     test('one child', () => {
       const positioned = FN.pipe(noPos, TU.fst, setPos(-1, -1));
 
-      const normalized = box.translateToPositive(positioned);
+      const normalized = box.translateToPositive([positioned]);
 
       assert.deepEqual(FN.pipe(normalized, AR.map(box.pos.get)), [pos(0, 0)]);
     });
@@ -27,7 +27,7 @@ suite('pos', () => {
     test('negative', () => {
       const positioned = FN.pipe(noPos, TU.bimap(setPos(3, -2), setPos(-1, 5)));
 
-      const normalized = box.translateToPositive(...positioned);
+      const normalized = box.translateToPositive(positioned);
 
       assert.deepEqual(FN.pipe(normalized, AR.map(box.pos.get)), [
         pos(0, 7),
@@ -37,7 +37,7 @@ suite('pos', () => {
 
     test('positive', () => {
       const positioned = FN.pipe(noPos, TU.bimap(setPos(3, 2), setPos(1, 5)));
-      const normalized = box.translateToPositive(...positioned);
+      const normalized = box.translateToPositive(positioned);
 
       assert.deepEqual(FN.pipe(normalized, AR.map(box.pos.get)), [
         pos(1, 5),

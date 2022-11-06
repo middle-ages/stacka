@@ -1,10 +1,10 @@
-import { roleReport, report } from './report';
+import { roleReport, rolesReport } from './rolesReport';
 import { registry } from './registry';
 import * as quadRes from './quadRes';
 import * as role from './role';
 import * as data from './data';
 import * as ops from './ops';
-import { named, isDirect } from './named';
+import { named } from './named';
 
 export type {
   Px,
@@ -18,9 +18,9 @@ export type {
   RelCheck,
 } from './data';
 
-export type { Dash, Direct, Orient } from './named';
 export type { BitmapRole } from './role';
 export type { Registry } from './registry';
+export type { BasicGroup, ElbowGroup, LineGroup } from './named';
 
 export const bitmap = {
   ...role,
@@ -30,9 +30,6 @@ export const bitmap = {
   ...registry,
   ...named,
   registry: registry.reg,
-  elbowsFor: named.elbowsFor,
-  tee: named.tee,
   roleReport,
-  isDirect,
-  report,
+  rolesReport,
 } as const;

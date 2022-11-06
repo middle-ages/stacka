@@ -35,10 +35,10 @@ suite('rect', () => {
     assert.deepEqual(rect.fromCorners([pos(1, 2), pos(5, 4)]), iut1235));
 
   test('corners', () =>
-    assert.deepEqual(rect.corners(iut1235), [pos(1, 2), pos(5, 4)]));
+    assert.deepEqual(rect.getCorners(iut1235), [pos(1, 2), pos(5, 4)]));
 
   test('setRight', () =>
-    assert.deepEqual(FN.pipe(iut1235, rect.right.set(0), rect.corners), [
+    assert.deepEqual(FN.pipe(iut1235, rect.right.set(0), rect.getCorners), [
       pos(1, -2),
       pos(5, 0),
     ]));
@@ -88,7 +88,7 @@ suite('rect', () => {
 
   test('corners and size', () =>
     assert.deepEqual(
-      FN.pipe(iut1235, rect.corners, pos.rectSize),
+      FN.pipe(iut1235, rect.getCorners, pos.rectSize),
       rect.size.get(iut1235),
     ));
 

@@ -3,147 +3,54 @@ import {
   array as AR,
   function as FN,
   option as OP,
+  readonlyArray as RA,
   readonlyNonEmptyArray as NE,
 } from 'fp-ts';
 import { fork } from 'fp-ts-std/Function';
-import { dup, mapBoth } from 'fp-ts-std/Tuple';
-import { Lazy } from 'fp-ts/lib/function';
+import { dup, mapBoth, withSnd } from 'fp-ts-std/Tuple';
 import { Endo, Unary } from 'util/function';
 import { Pair, Tuple3 } from 'util/tuple';
-
-export type map2 = <A, B>(f: Unary<A, B>) => Unary<A[][], B[][]>;
-export const map2: map2 = FN.flow(AR.map, AR.map);
 
 export const last = <T>(arr: T[]): T => arr[arr.length - 1] as T,
   init = <T>(arr: T[]): T[] => arr.slice(0, arr.length - 1),
   initLast = <T>(arr: T[]): [T[], T] => [init(arr), last(arr)];
 
-export const splitN =
-  (n: number) =>
-  <T>(arr: T[]): [T[], T[]] =>
-    [arr.slice(0, n), arr.slice(n)];
-
-export const splitFinalN =
-  (n: number) =>
-  <T>(arr: T[]): [T[], T[]] =>
-    [arr.slice(0, arr.length - n), arr.slice(-1 * n, -1)];
-
-export const headLastMain = <T>(arr: T[]): [T, T, T[]] => {
-  const [init, last] = initLast(arr);
-  const [head, main] = headTail(init);
-  return [head, last, main];
-};
-
 export const head = <T>(arr: T[]): T => arr[0] as T,
   tail = <T>(arr: T[]): T[] => arr.slice(1, arr.length),
   headTail = <T>(arr: T[]): [T, T[]] => [head(arr), tail(arr)];
-
-function* arrayGen<T>(xs: T[]): Generator<T, undefined, never> {
-  for (const x of xs) yield x;
-  return undefined;
-}
-export const toGen = <T>(xs: T[]): Lazy<T | undefined> => {
-  const gen = arrayGen(xs);
-  return () => gen.next().value;
-};
-
-export const toCyclicGen = <T>(xs: T[]): Lazy<T> => {
-  let gen = arrayGen(xs);
-  return () => {
-    const value = gen.next().value;
-    if (value !== undefined) return value;
-    gen = arrayGen(xs);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return gen.next().value!;
-  };
-};
 
 export const splitAt =
   (n: number) =>
   <T>(xs: T[]): [T[], T, T[]] => {
     const len = xs.length;
     if (n < 0) {
-      if (len < Math.abs(n))
-        throw new Error(`splitAt #xs < |n|: “${len}” < |“${n}”|`);
+      assert(len >= Math.abs(n), `splitAt #xs < |n|: “${len}” < |“${n}”|`);
 
       return [xs.slice(0, n), xs[len + n] as T, xs.slice(len + n + 1, len)];
     } else {
-      if (len <= n) throw new Error(`splitAt #xs ≤ n: “${len}” ≤ “${n}”`);
+      assert(len > n, `splitAt #xs ≤ n: “${len}” ≤ “${n}”`);
 
       return [xs.slice(0, n), xs[n] as T, xs.slice(n + 1)];
     }
   };
 
-export const withRowN =
-  (n: number) =>
-  <A>(f: Endo<A>): Endo<A[]> =>
-  xs => {
-    const [b, x, a] = splitAt(n)(xs ?? []);
-    return [...b, f(x), ...a];
-  };
-
-export const withHead = withRowN(0);
-
 export const append =
   <T>(parent: T[]): Unary<T, T[]> =>
   child =>
-    [...parent, child];
+    parent.concat([child]);
 
 export const addAfter =
     <T>(suffix: T[]): Endo<T[]> =>
     xs =>
-      [...xs, ...suffix],
+      xs.concat(suffix),
   addBefore =
     <T>(prefix: T[]): Endo<T[]> =>
     xs =>
-      [...prefix, ...xs],
+      prefix.concat(xs),
   addAround =
     <A>([prefix, suffix]: Pair<A[]>): Endo<A[]> =>
     xs =>
       FN.pipe(xs, addBefore(prefix), addAfter(suffix));
-
-export const wrap = <A>([pre, post]: Readonly<Pair<A>>): Endo<A[]> =>
-  FN.flow(AR.prepend(pre), AR.append(post));
-
-/** fp-ts zip uses function overloading which breaks uncurrying */
-export const zip =
-  <B>(bs: Array<B> | Readonly<Array<B>>) =>
-  <A>(as: Array<A> | Readonly<Array<A>>): Array<[A, B]> =>
-    AR.zip([...as], [...bs]);
-
-export const zipU = <A, B>(bs: Array<B>, as: Array<A>): Array<[A, B]> =>
-  AR.zip(as, bs);
-
-/**
- * Map a function over the grid cells of a rectangle defined by the given
- * position and size. The given function will be called with the index of the
- * row inside the rectangle that is being mapped over.
- **/
-export const modSubgrid =
-  ([top, left]: Pair<number>, [width, height]: Pair<number>) =>
-  <T>(f: Unary<number, Endo<T[]>>): Endo<T[][]> =>
-  grid => {
-    const threeSlice =
-      ([fstCut, size]: Pair<number>) =>
-      <S>(xs: S[]) =>
-        [
-          xs.slice(0, fstCut),
-          xs.slice(fstCut, fstCut + size),
-          xs.slice(fstCut + size),
-        ] as Tuple3<S[]>;
-
-    const [pre, mid, post] = FN.pipe(grid, threeSlice([top, height]));
-
-    const midRes = FN.pipe(
-      mid,
-      AR.mapWithIndex((idx, cells: T[]) => {
-        const [pre, mid, post] = FN.pipe(cells, threeSlice([left, width]));
-        return [...pre, ...f(idx)(mid), ...post];
-      }),
-    );
-
-    return [...pre, ...midRes, ...post];
-  };
 
 /**
  * Repeat a subgrid as many time as required to fill the given area.
@@ -175,28 +82,13 @@ export const repeatSubgrid =
         ? row
         : fromWidth > width
         ? row.slice(0, width)
-        : [...AR.flatten(AR.replicate(widthN, row)), ...row.slice(0, widthRem)];
+        : AR.flatten(AR.replicate(widthN, row)).concat(row.slice(0, widthRem));
 
     const body = height < fromHeight ? [] : FN.pipe(from, AR.map(repeatRow)),
       rem = FN.pipe(from.slice(0, heightRem), AR.map(repeatRow));
 
-    return [...AR.flatten(AR.replicate(heightN, body)), ...rem];
+    return AR.flatten(AR.replicate(heightN, body)).concat(rem);
   };
-
-const zipAll = <U, V>(u: U[], v: V[]): [OP.Option<U>, OP.Option<V>][] => {
-  const max = Math.max(u.length, v.length),
-    delta = AR.replicate(max - Math.min(u.length, v.length), OP.none);
-
-  const [opU, opV]: [OP.Option<U>[], OP.Option<V>[]] = [
-    FN.pipe(u, AR.map(OP.some), arr =>
-      u.length === max ? arr : [...arr, ...delta],
-    ),
-    FN.pipe(v, AR.map(OP.some), arr =>
-      v.length === max ? arr : [...arr, ...delta],
-    ),
-  ];
-  return zipU(opV, opU);
-};
 
 export const chunksOf =
   (n: number) =>
@@ -215,6 +107,24 @@ export const chunksOf =
  * there will also some `None` values.
  */
 export const chunk4x = <T>(rows: T[][]): Pair<Pair<OP.Option<T>>>[][] => {
+  const zipU = <A, B>(bs: Array<B>, as: Array<A>): Array<[A, B]> =>
+    AR.zip(as, bs);
+
+  const zipAll = <U, V>(u: U[], v: V[]): [OP.Option<U>, OP.Option<V>][] => {
+    const max = Math.max(u.length, v.length),
+      delta = AR.replicate(max - Math.min(u.length, v.length), OP.none);
+
+    const [opU, opV]: [OP.Option<U>[], OP.Option<V>[]] = [
+      FN.pipe(u, AR.map(OP.some), arr =>
+        u.length === max ? arr : [...arr, ...delta],
+      ),
+      FN.pipe(v, AR.map(OP.some), arr =>
+        v.length === max ? arr : [...arr, ...delta],
+      ),
+    ];
+    return zipU(opV, opU);
+  };
+
   // each pair is the char in the row + the char below it
   const rowPairs = FN.pipe(
     rows,
@@ -283,4 +193,13 @@ export const withAdjacent = <T>(chain: T[]): Entry<T>[] => {
 
     [last(chain), [[last(at)], []]],
   ];
+};
+
+/** Index a list and returns a function for testing membership  */
+export const membershipTest = <A extends string>(xs: readonly A[]) => {
+  const dict = FN.pipe(xs, RA.map(withSnd(true)), Object.fromEntries) as Record<
+    A,
+    true
+  >;
+  return (k: string) => k in dict;
 };

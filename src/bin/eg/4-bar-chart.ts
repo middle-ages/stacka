@@ -1,12 +1,12 @@
 import { array as AR, function as FN } from 'fp-ts';
 import { join } from 'fp-ts-std/Array';
 import { split } from 'fp-ts/lib/string';
-import { bitmap, border, Box, box, color } from 'src/stacka';
+import { bitmap, Color, border, Box, box, color } from 'src/stacka';
 
 const rawArgs = process.argv.slice(3).join('');
 
 const args = (
-  rawArgs === '' ? 'H:16,E:8,L:4,L:2,O:1, :0,W:0,O:1,R:2,L:4,D:8,!:16' : rawArgs
+  rawArgs === '' ? 'H:14,E:8,L:4,L:2,O:1, :0,W:0,O:1,R:2,L:4,D:8,!:14' : rawArgs
 )
   .split(',')
   .map(split(':'))
@@ -20,33 +20,32 @@ const colors = {
   panelBg: 'light',
   valueBg: 'lighter',
   frameBg: 'darkest',
-  border: { args: ['grey', 'darkGrey'], frame: ['darker', 'dark'] },
   sepFg: 'black',
+  args: ['grey', 'darkGrey'],
+  frame: ['darker', 'dark'],
   innerSepFg: 'blue',
   argKey: color.hex('#447f0088'),
   argValue: color.hex('#7f004488'),
 } as const;
 
-const borderSet = border.sets.halfSolidNear;
+const addBorder = (colors: readonly [Color, Color]) =>
+  border.colored('halfSolidNear', [...colors]);
 
-const nextColor = color.rainbow8Gen;
+const nextColor = color.rainbow8Gen();
 
-const deco = {
-  sep: FN.pipe(bitmap.line.vertical, color.of([colors.sepFg, colors.panelBg])),
-  innerSep: FN.pipe(':', color.of([colors.innerSepFg, colors.panelBg])),
-  border: {
-    args: FN.pipe(borderSet, border.setColor([...colors.border.args])),
-    frame: FN.pipe(borderSet, border.setColor([...colors.border.frame])),
-  },
-} as const;
+const sep = FN.pipe(
+    bitmap.line.vertical,
+    color.of([colors.sepFg, colors.panelBg]),
+  ),
+  innerSep = FN.pipe(':', color.of([colors.innerSepFg, colors.panelBg]));
 
 const argBox = box({
-  apply: border(deco.border.args),
+  apply: addBorder(colors.args),
   rows: FN.pipe(
     args,
     AR.map(showArg),
     AR.chunksOf(6),
-    FN.pipe(deco.sep, join, AR.map),
+    FN.pipe(sep, join, AR.map),
   ),
 });
 
@@ -56,7 +55,7 @@ FN.pipe(
   box.catSnugRightOf,
   box.blend.set('screen'),
   box.setGridBg(colors.frameBg),
-  border(deco.border.frame),
+  addBorder(colors.frame),
   box.belowCenter(argBox),
   box.margin(2),
   box.print,
@@ -71,11 +70,7 @@ function bar(idx: number, [name, rawHeight]: [string, string]): Box {
   return box({
     row: FN.pipe(name, color.bg(colors.sepFg)),
     height: height + 1, // 1 character for the bar label
-    apply: FN.pipe(
-      idx % 2 ? border.sets.hThick : border.sets.vThick,
-      border.setFg(nextColor()),
-      border,
-    ),
+    apply: border.withFg(idx % 2 ? 'hThick' : 'vThick', nextColor()),
   });
 }
 
@@ -88,6 +83,6 @@ function showArg([name, height]: [string, string]): string {
       ),
       FN.pipe(height.padStart(2), color.of([colors.argValue, colors.valueBg])),
     ],
-    join(deco.innerSep),
+    join(innerSep),
   );
 }

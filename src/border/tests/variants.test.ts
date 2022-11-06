@@ -16,6 +16,6 @@ suite('border variants', () => {
 
   test('hRule', () =>
     assert.deepEqual(FN.pipe(border.hRule(3), box.asStrings), [
-      AR.replicate(3, bitmap.line.dashed.wide.horizontal).join(''),
+      AR.replicate(3, bitmap.line.dash.wide.horizontal).join(''),
     ]));
 });

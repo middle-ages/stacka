@@ -1,23 +1,14 @@
-import { function as FN, option as OP } from 'fp-ts';
-import { flip } from 'fp-ts-std/Function';
+import { function as FN, option as OP, readonlyArray as RA } from 'fp-ts';
 import { mapBoth } from 'fp-ts-std/Tuple';
 import { Box, box, BoxSet } from 'src/box';
 import { Color, OpacityLevel } from 'src/color';
-import { Cell, grid, Style } from 'src/grid';
-import { BinaryC, Endo, Unary } from 'util/function';
+import { Style } from 'src/grid';
+import { Binary, Endo, Unary } from 'util/function';
 import { mapValues } from 'util/object';
-import { Pair, Tuple3, tuple3Map } from 'util/tuple';
-import { fromCells } from './build';
-import { basicBorderChars } from './sets';
+import { Pair, Tuple3, tuple3Map, Tuple4 } from 'util/tuple';
+import { apply } from './apply';
+import { sets } from './sets';
 import { Border, BorderName } from './types';
-
-export const withStyle: BinaryC<Unary<string, Cell>, BorderName, Border> = f =>
-  FN.flow(basicBorderChars, mapValues(f), fromCells);
-
-export const withFg: BinaryC<Color, BorderName, Border> = FN.flow(
-  flip(grid.cell.fgChar),
-  withStyle,
-);
 
 const fromBoxOp: Unary<Endo<Box>, Endo<Border>> = FN.flow(OP.map, mapValues);
 
@@ -49,3 +40,21 @@ export const [setFgOpacity, setBgOpacity]: Pair<
 export const setStyle: Unary<Style, Endo<Border>> = fromUnaryBoxOp(
   box.setGridStyle,
 );
+
+/** Sugar for creating + setting a color + adding border in one go */
+export const [withFg, withBg, withSolidFg, withSolidBg] = FN.pipe(
+  [setFg, setBg, setSolidFg, setSolidBg] as const,
+  RA.map(
+    f => (name: BorderName, color: Color) =>
+      FN.pipe(sets[name], f(color), apply),
+  ),
+) as Tuple4<Binary<BorderName, Color, Endo<Box>>>;
+
+/**
+ * Given a border set name and a pair of fg/bg colors, add the border to the
+ * given box
+ */
+export const colored: Binary<BorderName, Pair<Color>, Endo<Box>> = (
+  name,
+  [fg, bg],
+) => FN.pipe(sets[name], setFg(fg), setBg(bg), apply);

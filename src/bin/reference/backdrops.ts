@@ -110,7 +110,7 @@ const report = (name: Name, backdrop: Backdrop): Box => {
   return box.centered({
     text: FN.pipe(name, style === undefined ? FN.identity : style),
     size: reportSize,
-    apply: FN.pipe(br.sets.dash.dot, br.roundCorners, br.setFg('dark'), br),
+    apply: br.withFg('roundDotted', 'dark'),
     blend: 'normal',
     backdrop,
   });

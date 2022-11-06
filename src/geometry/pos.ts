@@ -101,15 +101,13 @@ export const isOrigin: PRE.Predicate<Pos> = FN.pipe(origin, curry2(eq.equals)),
     ] as const,
     pairCartesian,
     AR.map(
-      ([order, cmp]) =>
-        (fst: Pos, ...rest: Pos[]): Pos =>
-          FN.pipe(rest, AR.reduce(fst, cmp(order))),
+      ([order, cmp]): Unary<Pos[], Pos> =>
+        ps =>
+          ps.slice(1, ps.length).reduce(cmp(order), ps[0]),
     ),
   ),
-  min = (fst: Pos, ...rest: Pos[]) =>
-    build(minTop(fst, ...rest).top, minLeft(fst, ...rest).left),
-  max = (fst: Pos, ...rest: Pos[]) =>
-    build(maxTop(fst, ...rest).top, maxLeft(fst, ...rest).left),
+  min = (ps: Pos[]) => build(minTop(ps).top, minLeft(ps).left),
+  max = (ps: Pos[]) => build(maxTop(ps).top, maxLeft(ps).left),
   rectSize: Unary<Pair<Pos>, Size> = ([tl, br]: Pair<Pos>) => {
     const { top, left } = sub(br, tl);
     return buildSize(Math.abs(left) + 1, Math.abs(top) + 1);
@@ -121,11 +119,11 @@ export const isOrigin: PRE.Predicate<Pos> = FN.pipe(origin, curry2(eq.equals)),
  *
  * Origin is at top left and axes go right and down.
  */
-export const translateToPositive = (fst: Pos, ...rest: Pos[]): Pos[] => {
+export const translateToPositive: Endo<Pos[]> = ps => {
   const computeDelta: Endo<number> = coord => (coord >= 0 ? 0 : -1 * coord),
-    topLeft = min(fst, ...rest),
+    topLeft = min(ps),
     delta = FN.pipe(topLeft, pair, mapBoth(computeDelta), tupled);
 
-  return FN.pipe([fst, ...rest], FN.pipe(delta, addC, AR.map));
+  return FN.pipe(ps, FN.pipe(delta, addC, AR.map));
 };
 //#endregion

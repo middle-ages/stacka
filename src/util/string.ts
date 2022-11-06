@@ -4,17 +4,11 @@ import {
   readonlyArray as RA,
   string as STR,
 } from 'fp-ts';
-import { curry2, uncurry2 } from 'fp-ts-std/Function';
-import {
-  append,
-  lines as splitLines,
-  prepend,
-  unlines,
-} from 'fp-ts-std/String';
+import { curry2 } from 'fp-ts-std/Function';
+import { lines as splitLines, prepend } from 'fp-ts-std/String';
 import { Predicate } from 'fp-ts/lib/Predicate';
-import { headTail, initLast, withHead } from 'util/array';
-import { Binary, BinaryC, BinOpC, Endo, Unary } from 'util/function';
-import { Pair } from 'util/tuple';
+import { initLast } from 'util/array';
+import { Binary, BinaryC, Endo, Unary } from 'util/function';
 
 export const split =
     (re: RegExp): Unary<string, string[]> =>
@@ -33,21 +27,6 @@ export const nChars: BinaryC<string, number, string> = c => n =>
     RA.replicate(n, c).join(''),
   nSpaces: Unary<number, string> = nChars(' ');
 
-export const prependHead: BinOpC<string> = prefix =>
-  FN.flow(lines, withHead(prepend(prefix)), unlines);
-
-export const prependHeadTail: Unary<Pair<string>, Endo<string[]>> =
-  ([headPrefix, tailPrefix]) =>
-  rows => {
-    if (rows.length < 2) return [FN.pipe(rows[0], prepend(headPrefix))];
-
-    const [head, tail] = headTail(rows);
-    return [
-      FN.pipe(head, prepend(headPrefix)),
-      ...FN.pipe(tail, FN.pipe(tailPrefix, prepend, AR.map)),
-    ];
-  };
-
 export const prependInitLast: BinaryC<string, string, Endo<string[]>> =
   initPrefix => lastPrefix => rows => {
     if (rows.length < 2) return [FN.pipe(rows[0], prepend(lastPrefix))];
@@ -58,14 +37,3 @@ export const prependInitLast: BinaryC<string, string, Endo<string[]>> =
       FN.pipe(last, prepend(lastPrefix)),
     ];
   };
-
-/** Zip and concat a row pair */
-export const zipRows: BinOpC<string[]> = left => right =>
-  FN.pipe(right, AR.zip(left), FN.pipe(append, uncurry2, AR.map));
-
-/** Uses `zip` to reduce a list-of-list of strings into a list of strings */
-export const zipReduceRows = ([head, ...columns]: string[][]): string[] =>
-  FN.pipe(
-    columns,
-    AR.reduce(head, (acc, cur) => FN.pipe(cur, zipRows(acc))),
-  );

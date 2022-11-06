@@ -5,8 +5,8 @@ import { backdrop } from 'src/backdrop';
 import { bitmap } from 'src/bitmap';
 import { Box, box, BoxSet } from 'src/box';
 import { Color, color } from 'src/color';
-import { corner } from 'src/geometry';
-import { typedFromEntries } from 'src/util/object';
+import { dir, Orient, corner } from 'src/geometry';
+import { typedFromEntries } from 'util/object';
 import { apply1, BinaryC, Endo, Unary } from 'util/function';
 import { Pair } from 'util/tuple';
 import { grid } from '../grid';
@@ -21,8 +21,8 @@ export const [hLines, vLines]: Pair<Border> = FN.pipe(
 );
 
 export const big: Endo<Box> = FN.flow(
-  apply(sets.halfSolid.far),
-  apply(sets.halfSolid.near),
+  apply(sets.halfSolidFar),
+  apply(sets.halfSolidNear),
 );
 
 /** Nest a border list with the 1st as the innermost */
@@ -34,7 +34,10 @@ const fromBackdropChar = FN.flow(
   box.fromBackdropImage,
 );
 
-const [thin, thick] = [bitmap.line.dashed.wide, bitmap.line.dashed.thick.wide];
+const [thin, thick]: Pair<Orient> = [
+  bitmap.line.dash.wide,
+  bitmap.line.dash.thick.wide,
+];
 
 export const topHSep: Border = FN.pipe(sets.line, mask.noVEdges, mask.openB),
   thickTopHSep: Border = FN.pipe(sets.thick, mask.noVEdges, mask.openB);
@@ -59,7 +62,8 @@ export const checkeredNear: Unary<Color, Border> = bg => {
     );
 
   const { top, bottom, left, right } = FN.pipe(
-    bitmap.line.near,
+    bitmap.line,
+    dir.pickDirs<string>(),
     RC.map(checker),
   );
 

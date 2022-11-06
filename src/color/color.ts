@@ -29,7 +29,13 @@ const fns = {
   hex: hexExports.hex,
 };
 
-export type { Color, LayerColor, MaybeColor, NamedColor } from './named';
+export type {
+  ColorPair,
+  Color,
+  LayerColor,
+  MaybeColor,
+  NamedColor,
+} from './named';
 
 export type color = typeof fg & typeof fns;
 

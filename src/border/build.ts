@@ -29,4 +29,10 @@ export const fromNarrowChars: Unary<CharParts, Border> = FN.flow(
   fromCells,
 );
 
-export const empty: Border = FN.pipe(OP.none, FN.constant, borderDir.associate);
+export const fromChar: Unary<string, Border> = FN.flow(
+  box.fromRow,
+  OP.some,
+  borderDir.singleton,
+);
+
+export const empty: Border = borderDir.singleton(OP.none);

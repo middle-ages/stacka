@@ -1,60 +1,80 @@
-import { array as AR, function as FN, nonEmptyArray as NE } from 'fp-ts';
-import { add, multiply } from 'fp-ts-std/Number';
+import { array as AR, nonEmptyArray as NE } from 'fp-ts';
+import { add } from 'fp-ts-std/Number';
+import { flow, Lazy, pipe } from 'fp-ts/function';
 import { border, Box, box, color, Color, termSize } from 'src/stacka';
-import { toCyclicGen } from 'util/array';
+
+const phase: number = (() => {
+  const p = parseInt(process.argv[2]);
+  return Number.isNaN(p) ? 0 : p;
+})();
 
 /* Stacking three charts on top of each other */
 
-const innerBarWidth = 4, // bar width > 0, or ≥0 if has border
+const innerBarWidth = 3, // bar width > 0, or ≥0 if has border
   barGap = -1, // gap between bars, negative means shifted into prev bar
   waveCount = 3, // how may waves?
-  waveShift = 1, // each wave is shifted right waveShift × waveIdx
-  nextColor: FN.Lazy<Color> = toCyclicGen([
-    color.hex('#ff0000c8'),
-    color.hex('#0000ffa8'),
-    color.hex('#00ff0088'),
+  margin = 2,
+  nextColor: Lazy<Color> = color.cycle([
+    color.hex('#05af'),
+    color.hex('#4742'),
+    color.hex('#f80a'),
   ]),
-  blend = box.blend.set('screen');
+  blend = box.blendScreen;
 
 const fn = Math.sin;
 
-const [width, height] = termSize(),
+const [termWidth, termHeight] = termSize(),
   borderWidth = 2,
   barWidth = barGap + innerBarWidth + borderWidth,
-  barCount = Math.floor((width - waveCount) / barWidth),
+  barCount = Math.floor((termWidth - 2 * margin - waveCount) / barWidth),
   domain = NE.range(0, barCount - 1),
   waves = NE.range(0, waveCount - 1);
 
+// inject the X-axis into the domain of `fn`: from `Turns` unit to `Rad`
 const inject =
-    (shift: number) =>
+    (waveIdx: number) =>
     (x: number): number =>
-      2 * Math.PI * (shift + x / barCount),
-  project = (y: number): number => 1 + (y + 1) * (1 / 2) * (height - 6);
-
-const addBorder = (color: Color): ((box: Box) => Box) =>
-  FN.pipe('double', border.withFg(color), border);
+      2 *
+      Math.PI *
+      (waveIdx / waveCount + (x + phase * (waveIdx % 2 ? -1 : 1)) / barCount),
+  // project the Y-axis from the range of `fn`: scale to term height
+  project = (y: number): number =>
+    1 + (y + 1) * (1 / 2) * (termHeight - 2 * margin - 6);
 
 const bar =
+  (waveIdx: number) =>
   (color: Color) =>
   (height: number): Box =>
-    FN.pipe(
+    pipe(
       box.empty,
       box.size.set({ width: innerBarWidth, height }),
-      addBorder(color),
+      pipe(
+        border.sets[waveIdx === waveCount - 1 ? 'thick' : 'line'],
+        border.mask.openB,
+        border.setFg(color),
+        border,
+      ),
     );
 
 const wave = (waveIdx: number): Box => {
   const color = nextColor();
-  return FN.pipe(
-    FN.pipe(
-      domain,
-      AR.map(FN.flow(inject(waveIdx / waveCount), fn, project, Math.round)),
-    ),
-    FN.pipe(color, bar, AR.map),
+  return pipe(
+    pipe(domain, AR.map(flow(inject(waveIdx), fn, project, Math.round))),
+    pipe(color, bar(waveIdx), AR.map),
     box.catRightOfGap(barGap),
-    FN.pipe(waveIdx, multiply(waveShift), add, box.left.mod),
+    pipe(waveIdx, add, box.left.mod),
     blend,
   );
 };
 
-FN.pipe(waves, AR.map(wave), box.branch, blend, box.print);
+pipe(
+  waves,
+  AR.map(wave),
+  box.branch,
+  blend,
+  box.alignT,
+  box.subHeight(1),
+  border.withFg('hMcGugan', 'dark'),
+  box.margin(margin),
+  box.print,
+);

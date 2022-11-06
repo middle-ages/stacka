@@ -1,5 +1,6 @@
-import { bold, grey, underline } from 'ansis/colors';
+import { grey, underline } from 'ansis/colors';
 import { array as AR } from 'fp-ts';
+import { prepend } from 'fp-ts-std/String';
 import { mapBoth } from 'fp-ts-std/Tuple';
 import { flow, identity, pipe } from 'fp-ts/lib/function';
 import { align, BlendMode, border, Box, box, boxes, color } from 'src/stacka';
@@ -13,8 +14,6 @@ type MixConfig = { glyph: boolean; style: boolean };
 const [aboveColor, belowColor] = [color.hex('#a00f'), color.hex('#0c0f')];
 
 const bool = (f: boolean): string => (f ? '✅' : '❌') + ' ';
-
-//const reorder: ModPair = TU.mapFst(box.incZOrder);
 
 const allMixes = [
   { glyph: true, style: false },
@@ -38,7 +37,7 @@ const mixBlends: Pair<BlendMode>[] = pipe(
           ┊  myBlendMode   ┊
           ├┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┤
           ┊┏━━━━━━━━━┓     ┊
-blender = ┊┃↑ above  ┃     ┊  blenders = blends ∘ blender 
+blender = ┊┃↑ above  ┃     ┊  blenders = concat(blender per blend mode)
           ┊┃    ┏━━━━╋━━━━┓┊
           ┊┗━━━━╋━━━━┛    ┃┊
           ┊     ┃  ↓ below┃┊
@@ -94,19 +93,12 @@ const rows = pipe(mixBlends, AR.map(blenders(identity)), box.catBelow);
 const table = pipe(rows, pipe(mixHeaders, box.rightOfGap(2)));
 
 const title = pipe(
-  bold`Controling Composition` + ': Blend Modes, Opacity, and ZOrder',
+  ': Blend Modes, Opacity, and ZOrder',
+  color('lightGrey'),
+  prepend('Controling Composition'),
   color.of(['light', 'darker']),
   box.of,
   pipe(border.sets.near, border.setFg('darkest'), border),
 );
 
 pipe(title, pipe(table, box.aboveCenterGap(1)), box.print);
-
-/*
-
-const zOrderHeader = (f: boolean): [Box, ModPair] => [
-  box.of(`${bool(f)} zOrderFlipped`),
-  f ? TU.mapSnd(box.incZOrder) : identity,
-];
-
-*/

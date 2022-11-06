@@ -1,14 +1,13 @@
 import { array as AR, function as FN, option as OP } from 'fp-ts';
 import { fork } from 'fp-ts-std/Function';
 import { mapBoth } from 'fp-ts-std/Tuple';
-import { Border } from 'src/border';
 import { box, Box } from 'src/box';
 import { orientations, BorderDir, borderDir, dir } from 'src/geometry';
 import { Endo, Unary } from 'util/function';
 import { Pair, Tuple4 } from 'util/tuple';
 import { setOrientEdges, unsetEdge, unsetOrientEdges } from './edge';
 import { setCorners, setMaybeHParts, setMaybeVParts, setPart } from './part';
-import { EdgeParts } from './types';
+import { Border, EdgeParts } from './types';
 
 /** A mask removes some predefined parts of a border */
 

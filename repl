@@ -3,37 +3,45 @@
  *`ts-node` repl session: imports for quick prototyping
  *
  * To use, start `ts-node`, then run: `.load repl`. Type `help()` to print
- * import list. Then try running: `$('hello', txt, border.line, print)`
+ * import list. Then try running: `$('hello', txt, border.line, say)`
  */
 import {
-  box,
-  border,
-  glyph,
+  align,
   bitmap,
-  style,
-  color,
   block,
-  grid,
-  row,
+  border,
+  box,
+  boxes,
   cell,
+  color,
+  dir,
+  glyph,
+  grid,
+  hex,
+  pos,
+  rect,
+  row,
+  size,
+  style,
 } from './src/stacka';
 
 import {
-  function as FN,
   array as AR,
-  record as RC,
-  monoid as MO,
-  string as STR,
-  number as NUM,
-  ord as OD,
-  eq as EQ,
-  tuple as TU,
-  option as OP,
   either as EI,
+  eq as EQ,
+  function as FN,
+  monoid as MO,
+  number as NUM,
+  option as OP,
+  ord as OD,
+  record as RC,
+  string as STR,
+  tuple as TU,
 } from 'fp-ts';
 
 import * as TR from './src/util/tree';
 import * as BX from './src/stacka';
+import ansis from 'ansis';
 
 export const $ = FN.pipe;
 export const pipe = FN.pipe;
@@ -45,7 +53,7 @@ export const $$ = FN.flow;
 export const tupled = FN.tupled;
 
 export const txt = box.of;
-export const print = box.print;
+export const say = box.print;
 export const debug = box.debug.printTree;
 
 // some ready-made leaf and branch boxes to play with
@@ -59,25 +67,25 @@ export const emoji = '🙂';
 export const help = () =>
   `
 
-From fp-ts:                      From stacka:
+From fp-ts:                    From stacka:
 
-$,  pipe : function/pipe         BX      : all of stacka, I.e. BX.box === box
-$$, flow : function/flow         TR      : 'src/util/tree', for drawing trees
-K        : function/constant     txt     : alias for box.of
-I        : function/identity     print   : alias for box.print
-tupled   : function/constant     debug   : show box debug info
+$,  pipe: function/pipe        BX      :  all of stacka, I.e. BX.box === box
+$$, flow: function/flow        TR      :  'src/util/tree', for drawing trees
+K       : function/constant    txt     :  alias for box.of
+I       : function/identity    say:    :  alias for box.print
+tupled  : function/constant    debug   :  show box debug info
 
-fp-ts modules:                   Modules from stacka:
+fp-ts modules:                 Modules from stacka:
 
-FN : function     OD: ord        glyph     bitmap      style
-AR : array        EQ: eq         style     box         grid
-RC : record       TU: tupled     color     row         cell
-MO : monoid       OP: option     block     border      boxes
+FN : function     OD: ord      align  bitmap  block  border  box
+AR : array        EQ: eq       boxes  cell    color  dir     glyph
+RC : record       TU: tupled   grid   hex     pos    rect    row
+MO : monoid       OP: option   size   style
 STR: string       EI: either
-NU : number
+NU : number                    for ANSI styling 'ansis' is imported
 
 leaf1, leaf2, branch: demo boxes           emoji: give me an emoji
-try: $(emoji, txt, border.line, print)     help : this message
+try: $(emoji, txt, border.line, say)       help : this message
 
 `
     .split(/\n/)

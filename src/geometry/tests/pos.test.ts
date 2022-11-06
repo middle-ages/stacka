@@ -8,23 +8,20 @@ suite('pos', () => {
   test('basic', () => assert.equal(show(pos(1, 2)), '▲1:◀2'));
 
   test('minPos', () => {
-    const [head, ...rest] = [pos(1, 5), pos(3, 2), pos(3, 3)];
-    const actual = pos.min(head, ...rest);
+    const actual = pos.min([pos(1, 5), pos(3, 2), pos(3, 3)]);
     assert.deepEqual(actual, pos(1, 2));
   });
 
   suite('translateToPositive', () => {
     test('negative', () => {
-      const [head, ...rest] = [pos(-1, 5), pos(3, -2), pos(0, 0)];
-      assert.deepEqual(pos.translateToPositive(head, ...rest), [
-        pos(0, 7),
-        pos(4, 0),
-        pos(1, 2),
-      ]);
+      assert.deepEqual(
+        pos.translateToPositive([pos(-1, 5), pos(3, -2), pos(0, 0)]),
+        [pos(0, 7), pos(4, 0), pos(1, 2)],
+      );
     });
 
     test('all positive', () =>
-      assert.deepEqual(pos.translateToPositive(pos(1, 5), pos(3, 2)), [
+      assert.deepEqual(pos.translateToPositive([pos(1, 5), pos(3, 2)]), [
         pos(1, 5),
         pos(3, 2),
       ]));

@@ -2,9 +2,9 @@ import { array as AR, function as FN, option as OP, tuple as TU } from 'fp-ts';
 import { unlines } from 'fp-ts-std/String';
 import { BlendMode, Color } from 'src/color';
 import { Size, size } from 'src/geometry';
-import { head, map2 } from 'util/array';
-import { Pair, Tuple3 } from 'util/tuple';
+import { head } from 'util/array';
 import { BinaryC, BinOpT, Endo, Unary } from 'util/function';
+import { Pair, Tuple3 } from 'util/tuple';
 import { Cell, cell, Styled } from './cell/cell';
 import { row } from './row/row';
 import { style as ST, Style } from './style/style';
@@ -43,7 +43,8 @@ export const asStringsWith: BinaryC<string, Grid, string[]> = FN.flow(
   asStrings = asStringsWith(' '),
   asString: Unary<Grid, String> = FN.flow(asStrings, unlines);
 
-export const mapCells = <R>(f: Unary<Cell, R>): Unary<Grid, R[][]> => map2(f);
+export const mapCells = <R>(f: Unary<Cell, R>): Unary<Grid, R[][]> =>
+  AR.map(AR.map(f));
 
 export const modCells: Unary<Unary<Cell, Cell[]>, Endo<Grid>> = FN.flow(
   AR.map,

@@ -1,11 +1,11 @@
 import {
-  option as OP,
-  number as NU,
-  nonEmptyArray as NEA,
   array as AR,
   eq as EQ,
   function as FN,
   monoid as MO,
+  nonEmptyArray as NEA,
+  number as NU,
+  option as OP,
   predicate as PRE,
   readonlyArray as RA,
 } from 'fp-ts';
@@ -16,7 +16,7 @@ import * as LE from 'monocle-ts/lib/Lens';
 import { Lens } from 'monocle-ts/lib/Lens';
 import * as AL from 'src/align';
 import * as GE from 'src/geometry';
-import { Endo, NonEmptyEndo, Unary } from 'util/function';
+import { Endo, Unary } from 'util/function';
 import { ModLens, modLens } from 'util/lens';
 import { typedKeys } from 'util/object';
 import { Block } from './types';
@@ -66,29 +66,24 @@ export const showRect: Unary<Block, string> = ({ rect, align, blend }) =>
   FN.pipe([GE.rect.show.show(rect), AL.align.show(align), blend], unwords);
 
 export const translateToPositiveFor =
-    <T>(l: Lens<T, GE.Rect>): NonEmptyEndo<T> =>
-    (fst, ...rest) => {
-      const layouts = [fst, ...rest],
-        [fstRect, ...restRect] = FN.pipe(layouts, AR.map(l.get));
+    <T>(l: Lens<T, GE.Rect>): Endo<T[]> =>
+    layouts => {
+      const rects = FN.pipe(layouts, AR.map(l.get));
 
       return FN.pipe(
-        GE.rect.translateToPositive(fstRect, ...restRect),
+        GE.rect.translateToPositive(rects),
         AR.zip(layouts),
         FN.pipe(l.set, uncurry2, AR.map),
       );
     },
   minTopLeftFor =
     <T>(l: Lens<T, GE.Rect>) =>
-    (fst: T, ...rest: T[]): GE.Pos =>
-      FN.pipe([fst, ...rest], AR.map(l.get), ([fst, ...rest]) =>
-        GE.rect.minTopLeft(fst, ...rest),
-      ),
+    (ps: T[]): GE.Pos =>
+      FN.pipe(ps, AR.map(l.get), GE.rect.minTopLeft),
   maxBottomRightFor =
     <T>(l: Lens<T, GE.Rect>) =>
-    (fst: T, ...rest: T[]): GE.Pos =>
-      FN.pipe([fst, ...rest], AR.map(l.get), ([fst, ...rest]) =>
-        GE.rect.maxBottomRight(fst, ...rest),
-      );
+    (ts: T[]): GE.Pos =>
+      FN.pipe(ts, AR.map(l.get), GE.rect.maxBottomRight);
 
 export const hasSize: PRE.Predicate<Block> = PRE.not(
     FN.flow(rect.get, GE.rect.size.get, GE.size.isEmpty),
@@ -101,18 +96,21 @@ export const hasSize: PRE.Predicate<Block> = PRE.not(
   incZOrder = rect.mod(GE.rect.incZOrder),
   decZOrder = rect.mod(GE.rect.decZOrder),
   unsetZOrder = rect.mod(GE.rect.unsetZOrder),
-  corners = FN.flow(rect.get, GE.rect.corners),
+  corners = FN.flow(rect.get, GE.rect.getCorners),
   translateToPositive = translateToPositiveFor(rect),
   minTopLeft = minTopLeftFor(rect),
   maxBottomRight = maxBottomRightFor(rect),
   area = FN.flow(rect.get, GE.rect.area),
-  incSize = rect.mod(GE.rect.incSize);
+  [incSize, decSize] = [rect.mod(GE.rect.incSize), rect.mod(GE.rect.decSize)];
 
-export const withRect = {
-  ...rectShift(rect),
-  ...rectLenses(rect),
-  ...eqs(rect.get),
-} as const;
+export const delegateRect = <T>(l: ModLens<T, GE.Rect>) =>
+  ({
+    ...rectShift(l),
+    ...rectLenses(l),
+    ...eqs(l.get),
+  } as const);
+
+export const withRect = delegateRect(rect);
 
 const getWidth = withRect.width.get;
 

@@ -1,12 +1,18 @@
+import { hex, magenta } from 'ansis/colors';
 import { pipe } from 'fp-ts/lib/function';
 import { border, box } from 'src/stacka';
-import { magenta } from 'ansis/colors';
 
 pipe(
-  [magenta.bold`Hello🌍World`, 'from stacka'],
+  [
+    hex('#bbb').italic`one boxed in`,
+    magenta.bold`Hello 🌍 World`,
+    hex('#888')('ANSI bold and'),
+    magenta`brave magenta`,
+    '+ one emoji',
+  ],
   box.fromRows,
-  box.alignR,
+  box.center,
   box.hMargins(1),
-  pipe(border.sets.round, border.setFg('orange'), border.add),
+  border.withFg('round', 'orange'),
   box.print,
 );

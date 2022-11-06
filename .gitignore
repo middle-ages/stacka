@@ -3,6 +3,7 @@
 /lib/
 /dist/
 /test-results/
+/test-data/integration
 coverage
 *.log
 *-lock.yaml

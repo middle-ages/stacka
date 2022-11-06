@@ -40,7 +40,7 @@ export const addNode = <A>(n: Tree<A>): Endo<Tree<A>> =>
   FN.pipe(n, AR.append, nodes<A>().mod);
 
 export const addNodes = <A>(ns: Tree<A>[]): Endo<Tree<A>> =>
-  FN.pipe(ns, AR.concat, nodes<A>().mod);
+  nodes<A>().mod(ts => ns.concat(ts));
 
 export const getNodeCount = <A>(t: Tree<A>) => nodes<A>().get(t).length;
 export const hasNodes = <A>(t: Tree<A>) => getNodeCount(t) > 0;

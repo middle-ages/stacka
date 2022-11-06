@@ -19,18 +19,20 @@ export type {
   RectShiftKey,
 } from './geometry/rect';
 export type {
-  OrientDirs,
-  Dirs,
   Dir,
+  Direct,
   Directed,
-  Horizontal,
+  Dirs,
   HDir,
-  Vertical,
-  VDir,
+  Horizontal,
+  OrientDirs,
   ReversedDir,
+  VDir,
+  Vertical,
 } from './geometry/dir';
 export type { Corners, Corner, Cornered } from './geometry/corner';
 export type { Bordered, BorderDir, BorderDirs } from './geometry/borderDir';
+export type { Orient, Orientation } from './geometry/orientation';
 
 export type pos = typeof posFns.build & typeof posFns;
 export type size = typeof sizeFns.build & typeof sizeFns;

@@ -314,11 +314,13 @@ the functions there to customize the backdrop. Here is a screenshot:
 ## Borders
 
 The [border/sets.ts](src/bin/reference/border/sets.ts) reference script will
-show all named borders. You can use these directly, or apply masks, restyle,
+show all 28 named borders. You can use these directly, or apply masks, restyle,
 and combine with other borders to get custom version. Here is a
 screenshot:
 
 ![border/set.ts reference script output](doc/screenshots/reference/border/sets.ts.png)
+
+The `McGugan` pair are named after [McGugan boxes](https://www.willmcgugan.com/blog/tech/post/ceo-just-wants-to-draw-boxes/).
 
 And a diagram of the same, also showing how to access a named border set after
 importing `border`, and how to add it to a box:

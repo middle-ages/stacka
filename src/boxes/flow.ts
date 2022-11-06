@@ -1,12 +1,12 @@
 import assert from 'assert';
 import {
-  readonlyArray as RA,
   array as AR,
   function as FN,
   reader as RE,
+  readonlyArray as RA,
 } from 'fp-ts';
 import { box, Box, BoxSet, Cat } from 'src/box';
-import { BlendMode } from 'src/color';
+import { BlendMode, color } from 'src/color';
 import { BinaryC, Endo, Unary } from 'util/function';
 import { pluck } from 'util/object';
 import { delay, final, tco, Tco } from 'util/tco';
@@ -37,10 +37,7 @@ export interface FlowConfig {
    * Removed from available row width, useful if box has margins, borders, etc.
    */
   shrink: number;
-  /**
-   * Parent blend mode to override the default: usually `over`, but set
-   * to `normal` on snug gaps
-   */
+  /** Parent blend mode to override the default `combineOver` */
   blend: BlendMode;
   /**
    * An optional function from `Box` to `Box` that will be called after clipping
@@ -54,15 +51,12 @@ export interface FlowConfig {
 
 export type MinFlowConfig = Partial<FlowConfig> & { available: number };
 
-const defaultBlend = (hGap: number | undefined) =>
-  (hGap ?? 0) === -1 ? 'normal' : 'over';
-
 export const defaultConfig: Unary<MinFlowConfig, FlowConfig> = config => ({
   placeH: box.catRightOf,
   placeV: box.catBelow,
   hGap: 0,
   shrink: 0,
-  blend: defaultBlend(config.hGap),
+  blend: color.defaultBlendMode,
   clipMark: FN.identity,
   ...config,
 });

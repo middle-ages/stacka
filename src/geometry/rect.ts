@@ -145,7 +145,7 @@ export const addT: BinOpT<Rect> = ([fst, snd]) =>
       ? snd
       : isEmpty(snd)
       ? fst
-      : fromCorners([minTopLeft(fst, snd), maxBottomRight(fst, snd)]),
+      : fromCorners([minTopLeft([fst, snd]), maxBottomRight([fst, snd])]),
   add: BinOp<Rect> = (fst, snd) => addT([fst, snd]),
   addC: BinOpC<Rect> = curry2(add);
 
@@ -165,6 +165,7 @@ export const addPos: Unary<Pos, Endo<Rect>> = FN.flow(PO.addC, pos.mod),
   addHeight: SetNum = FN.flow(SZ.addHeight, size.mod),
   subHeight: SetNum = FN.flow(SZ.subHeight, size.mod),
   incSize: Endo<Rect> = FN.pipe(SZ.unitSquare, SZ.addC, size.mod),
+  decSize: Endo<Rect> = FN.pipe(SZ.unitSquare, SZ.subC, size.mod),
   scaleH: SetNum = FN.flow(SZ.scaleH, size.mod),
   scaleV: SetNum = FN.flow(SZ.scaleV, size.mod),
   scale: SetNum = FN.flow(SZ.scale, size.mod);
@@ -229,15 +230,11 @@ export const toQuad = <R extends Rect>({
     [width, height],
   ],
   toTuple = FN.flow(toQuad, flattenPair),
-  corners: Unary<Rect, Pair<Pos>> = fork([pos.get, bottomRight.get]),
-  minTopLeft = (fst: Rect, ...rest: Rect[]): Pos =>
-    FN.pipe([fst, ...rest], AR.map(pos.get), ([fst, ...rest]) =>
-      PO.min(fst, ...rest),
-    ),
-  maxBottomRight = (fst: Rect, ...rest: Rect[]): Pos =>
-    FN.pipe([fst, ...rest], AR.map(bottomRight.get), ([fst, ...rest]) =>
-      PO.max(fst, ...rest),
-    ),
+  getCorners: Unary<Rect, Pair<Pos>> = fork([pos.get, bottomRight.get]),
+  minTopLeft: Unary<Rect[], Pos> = rs =>
+    FN.pipe(rs, AR.map(pos.get), rs => PO.min(rs)),
+  maxBottomRight = (rs: Rect[]): Pos =>
+    FN.pipe(rs, AR.map(bottomRight.get), rs => PO.max(rs)),
   area = FN.flow(size.get, SZ.area);
 //#endregion
 
@@ -247,12 +244,12 @@ export const toQuad = <R extends Rect>({
  *
  * Translates all rectangles to the positive quadrant
  */
-export const translateToPositive = (fst: Rect, ...rest: Rect[]): Rect[] =>
+export const translateToPositive = (rs: Rect[]): Rect[] =>
     FN.pipe(
-      [fst, ...rest],
+      rs,
       AR.map(pos.get),
-      ([fst, ...rest]) => PO.translateToPositive(fst, ...rest),
-      AR.zip([fst, ...rest]),
+      PO.translateToPositive,
+      AR.zip(rs),
       AR.map(([p, r]) => FN.pipe(r, pos.set(p))),
     ),
   stack: Unary<Rect[], Rect> = MO.concatAll(monoid);

@@ -1,88 +1,49 @@
-import { head, last } from 'util/array';
+import assert from 'assert';
+import { array as AR, function as FN } from 'fp-ts';
+import { dir, Direct, Orient } from 'src/geometry';
 import { Unary } from 'util/function';
-import { Solid, Space } from './other';
-import { BasicCornerLine, Direct, Orient } from './types';
+import { solid, space } from './other';
 
-const dirs: Unary<string, Direct> = quad => {
+const direct: Unary<string, Direct> = quad => {
+  assert(quad.length === 4, `quad with length≠4: ${quad}`);
   const [top, right, bottom, left] = Array.from(quad);
   return { top, right, bottom, left };
 };
 
-const near = { top: '▔', right: '▕', bottom: '▁', left: '▏' } as const;
-
-export type HNearLine = typeof near['top' | 'bottom'];
-export type VNearLine = typeof near['left' | 'right'];
-
-/**
- * Automatic corner from orthogonal border line pair is only supported for
- * certain horizontal/vertical line characters, and not for all combinations of
- * supported line characters.
- * */
-export type VCornerLine =
-  | BasicCornerLine
-  | '▌'
-  | '▐'
-  | Solid
-  | VNearLine
-  | Space;
-
-export type HCornerLine =
-  | BasicCornerLine
-  | '▀'
-  | '▄'
-  | Solid
-  | HNearLine
-  | Space;
-
-const hv: Unary<string, Orient> = pair =>
-  ({
-    horizontal: head(Array.from(pair)),
-    vertical: last(Array.from(pair)),
-  } as const);
-
-const thinThick: Unary<string, Orient & { thick: Orient }> = quad => {
-  const [h, v, H, V] = Array.from(quad),
-    [thin, thick] = [hv(h + v), hv(H + V)] as const;
-  return { ...thin, thick } as const;
+const orient: Unary<string, Orient> = pair => {
+  assert(pair.length === 2, `orient with length≠2: ${pair}`);
+  const [horizontal, vertical] = Array.from(pair);
+  return { horizontal, vertical };
 };
 
-const [dotted, wide] = [thinThick('┈┊┉┋'), thinThick('╌╎╍╏')],
-  dashed = {
-    ...hv('┄┆'),
-    thick: { ...hv('┅┇'), wide: wide.thick },
-    wide,
+const mono = dir.singleton;
+
+const [lineDash, dot, wide, thickDash, thickDot, thickWide] = FN.pipe(
+  ['┄┆', '┈┊', '╌╎', '┅┇', '┉┋', '╍╏'],
+  AR.map(orient),
+);
+
+const dashed = {
+    ...lineDash,
+    thick: { ...thickDash, wide: thickWide },
+  } as const,
+  dotted = { ...dot, thick: thickDot } as const,
+  dashedWide = { ...wide, thick: thickWide } as const,
+  dash = { ...dashed, dot: dotted, wide: dashedWide } as const,
+  thick = {
+    ...orient('━┃'),
+    dash: thickDash,
+    dot: thickDot,
+    wide: thickWide,
   } as const;
 
-const halfSolid = dirs('▀▐▄▌');
-
-const thin = hv('─│');
-
-const thick = {
-  ...hv('━┃'),
-  dotted: dotted.thick,
-  dashed: dashed.thick,
-} as const;
-
-export const dash = {
-  none: thin,
-  dot: dotted,
-  line: dashed,
-  wide: wide,
-  thick: {
-    none: thick,
-    dot: dotted.thick,
-    line: dashed.thick,
-    wide: wide.thick,
-  },
-};
-
 export const line = {
-  ...near,
-  ...thin,
+  ...direct('▔▕▁▏'),
+  ...orient('─│'),
   thick,
-  double: hv('═║'),
-  dotted,
-  dashed,
-  near,
-  halfSolid,
+  dash,
+  double: orient('═║'),
+  halfSolid: direct('▀▐▄▌'),
+  space: mono(space),
+  solid: mono(solid),
 } as const;

@@ -1,7 +1,7 @@
 import { function as FN } from 'fp-ts';
 import { mapBoth } from 'fp-ts-std/Tuple';
-import { chopCharLeft } from 'src/grid/cell/ops';
-import { Binary, Unary } from 'util/function';
+import { cell } from '../cell/cell';
+import { Unary } from 'util/function';
 import { Pair } from 'util/tuple';
 import { chopAtLeastLeft } from './chopAtLeast';
 import { Row } from './types';
@@ -22,9 +22,6 @@ import { Row } from './types';
  *
  */
 
-const computeDelta: Binary<Row, Row, number> = (fstDone, sndDone) =>
-  fstDone.length - sndDone.length;
-
 export const chopMinLeft: Unary<Pair<Row>, Pair<Pair<Row>>> = ([fst, snd]) => {
   if (fst.length === 0)
     return [
@@ -32,13 +29,13 @@ export const chopMinLeft: Unary<Pair<Row>, Pair<Pair<Row>>> = ([fst, snd]) => {
       [[], []],
     ];
 
-  const [fstInit, sndInit] = FN.pipe([fst, snd], mapBoth(chopCharLeft));
+  const [fstInit, sndInit] = FN.pipe([fst, snd], mapBoth(cell.chopCharLeft));
 
   const [fstDone, sndDone] = [fstInit[0], sndInit[0]];
 
   let [fstTodo, sndTodo] = [fstInit[1], sndInit[1]];
 
-  let delta = computeDelta(fstDone, sndDone);
+  let delta = fstDone.length - sndDone.length;
 
   while (delta !== 0) {
     if (delta > 0) {
@@ -50,7 +47,7 @@ export const chopMinLeft: Unary<Pair<Row>, Pair<Pair<Row>>> = ([fst, snd]) => {
       fstTodo = right;
       fstDone.push(...left);
     }
-    delta = computeDelta(fstDone, sndDone);
+    delta = fstDone.length - sndDone.length;
   }
 
   return [

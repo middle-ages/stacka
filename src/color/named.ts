@@ -31,6 +31,7 @@ const named = {
   yellow: hex('#e0b000'),
   pink: hex('#ffc0ff'),
   green: hex('#0f0'),
+  lime: hex('#0f0'),
   cyan: hex('#0ff'),
   darkCyan: hex('#088'),
   orange: hex('#ef8500'),
@@ -46,6 +47,8 @@ export type NamedColor = keyof typeof named;
 export type Color = NamedColor | AnonColor;
 
 export type MaybeColor = OP.Option<Color>;
+
+export type ColorPair = [Color, Color];
 
 /** Either a foreground or background color, determined by 1st element */
 export type LayerColor = [Layer, Color];

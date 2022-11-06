@@ -7,15 +7,15 @@ import {
 import { sum } from 'fp-ts-std/Array';
 import { fork } from 'fp-ts-std/Function';
 import { prepend, unlines } from 'fp-ts-std/String';
+import { mapBoth } from 'fp-ts-std/Tuple';
 import { initLast } from 'util/array';
 import { Binary, Endo, Unary } from 'util/function';
 import { mapValues } from 'util/object';
-import { lines, nChars, nSpaces, prependHeadTail } from 'util/string';
+import { lines, nChars, nSpaces } from 'util/string';
 import { Pair } from 'util/tuple';
-import { mapBoth } from 'fp-ts-std/Tuple';
+import * as LN from './lens';
 import { treeCata } from './schemes';
 import { Tree, TreeAlgebra } from './types';
-import * as LN from './lens';
 
 /**
  * Keys for one character strings used for edges:
@@ -48,18 +48,22 @@ export type BulletConfig = Record<BulletString, string>;
 export type ColorConfig<C = string> = Record<ColorKeys, C | undefined>;
 
 /**
- * Tree draw configuration
+ * Tree draw configuration for color type `C`
  *
  * 1. `indent` - number of spaces to shift when going down one level
  * 2. `edge` - values for the one-char edges
  * 3. `bullet` - values for the multi-char bullets
+ * 4. `color` - color configuration for different parts
+ * 5. `colorize` - if using colors, this is the function of type
+ *    `C ⇒ string ⇒ string` which should colorize strings for
+ *    the color type `C`
  */
 export interface DrawConfig<C = string> {
   indent: number;
   edge: EdgeConfig;
   bullet: BulletConfig;
   color: ColorConfig<C>;
-  colorize?: Unary<string, Endo<string>>;
+  colorize?: Unary<C, Endo<string>>;
 }
 
 export type WithConfig<T, C = string> = RE.Reader<DrawConfig<C>, T>;
@@ -221,3 +225,17 @@ export const computeChildLines =
         : FN.pipe(tree, LN.value<A>().get, computeOwn);
     };
   };
+
+function prependHeadTail([headPrefix, tailPrefix]: Pair<string>): Endo<
+  string[]
+> {
+  return (rows: string[]) => {
+    if (rows.length < 2) return [FN.pipe(rows[0], prepend(headPrefix))];
+
+    const [head, ...tail] = rows;
+    return [
+      FN.pipe(head, prepend(headPrefix)),
+      ...FN.pipe(tail, FN.pipe(tailPrefix, prepend, AR.map)),
+    ];
+  };
+}

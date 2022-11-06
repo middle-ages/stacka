@@ -1,5 +1,5 @@
 import { array as AR, function as FN, record as RC } from 'fp-ts';
-import { Border, border, Box, box, color, Mask, SetName } from 'src/stacka';
+import { Border, border, Box, box, color, Mask, BorderName } from 'src/stacka';
 import stringWidth from 'string-width';
 import * as HE from '../../helpers';
 
@@ -22,19 +22,19 @@ import * as HE from '../../helpers';
 const arg = process.argv[2];
 
 if (arg === '-h') {
-  Object.keys(border.all).forEach(n => console.log(n));
+  Object.keys(border.names).forEach(n => console.log(n));
   process.exit();
 }
 
-if (undefined !== arg && !border.isSetName(arg)) {
+if (undefined !== arg && !border.isBorderName(arg)) {
   console.error(`Unknown border set named: “${arg}”, run with “-h”`);
   process.exit();
 }
 
-const targetName = (arg ?? 'thick') as SetName,
+const targetName = (arg ?? 'thick') as BorderName,
   target = FN.pipe(
-    border.all[targetName],
-    border.setColor(['orange', 'darkest']),
+    border.sets[targetName],
+    border.setColor(['lime', 'darkest']),
   );
 
 const widest = Math.max(...RC.keys(border.mask).map(stringWidth));
@@ -60,7 +60,7 @@ const demo = (name: Mask, op: (br: Border) => Border): Box => {
     },
     box.centered,
     FN.pipe(target, op, border),
-    FN.pipe(border.sets.dash.dot, border.setFg('dark'), border),
+    border.withFg('dotted', 'dark'),
   );
 };
 

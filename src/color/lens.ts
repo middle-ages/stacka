@@ -1,7 +1,7 @@
 import { readonlyArray as RA, function as FN, option as OP } from 'fp-ts';
 import { fork } from 'fp-ts-std/Function';
 import { Optional } from 'monocle-ts/lib/Optional';
-import { typedKeys } from 'src/util/object';
+import { typedKeys } from 'util/object';
 import { Endo, Unary } from 'util/function';
 import { ModLens, modLens, propLens } from 'util/lens';
 import { Tuple3 } from 'util/tuple';

@@ -52,9 +52,17 @@ export const catOpsInto: BinaryC<Box, OpC[], Cat> =
       : FN.pipe(
           prePlaced,
           AR.zip(ops),
-          AR.reduce([headAnchor], (acc, [cur, op]) =>
-            FN.pipe(acc, last, withSnd(cur), op, append(acc)),
-          ),
+          AR.reduce([headAnchor], (acc, [cur, op]) => {
+            const x = FN.pipe(
+              acc,
+              last,
+              withSnd<Box>(cur)<Box>,
+              op,
+              //AR.append(acc),
+              append(acc),
+            );
+            return x;
+          }),
           NO.addNodes,
           apply1(parent),
           PA.sizeFromNodes,

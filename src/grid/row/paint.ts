@@ -1,7 +1,7 @@
 import assert from 'assert';
-import { array as AR, function as FN } from 'fp-ts';
+import { function as FN } from 'fp-ts';
 import stringWidth from 'string-width';
-import { Binary, BinaryC } from 'util/function';
+import { BinaryC } from 'util/function';
 import { cell, Cell } from '../cell/cell';
 import { style as SY } from '../style/style';
 import { Row } from './types';
@@ -21,16 +21,13 @@ export const paintCharWith: BinaryC<string, Cell[], string> =
     );
     if (cell.isNone(headCell)) return sub;
 
-    const { char, style } = headCell;
-    return FN.pipe(char, SY.paint(style));
+    return FN.pipe(headCell.char, SY.paint(headCell.style));
   };
 
 /** Paint a row into a string with narrow char in 1st argument as filler */
 export const asStringWith: BinaryC<string, Row, string> = sub => row => {
-  const paintChar = paintCharWith(sub),
-    step: Binary<string, Cell[], string> = (acc, todo) => acc + paintChar(todo);
-
-  return FN.pipe(row, cell.chunkChars, AR.reduce('', step));
+  const paintChar = paintCharWith(sub);
+  return cell.chunkChars(row).map(paintChar).join('');
 };
 
 export const asString = asStringWith(' ');

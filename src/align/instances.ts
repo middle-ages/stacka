@@ -1,4 +1,5 @@
 import {
+  array as AR,
   eq as EQ,
   function as FN,
   number as NU,
@@ -9,7 +10,6 @@ import {
 } from 'fp-ts';
 import { curry2 } from 'fp-ts-std/Function';
 import { min } from 'fp-ts/lib/Ord';
-import { zip } from 'util/array';
 import { ordStruct } from 'util/fp-ts';
 import { BinOp, Unary, uncurry2T } from 'util/function';
 import { typedFromEntries } from 'util/object';
@@ -33,7 +33,7 @@ const alignSym = {
   },
 };
 
-const zipIndex = zip([0, 1, 2]),
+const zipIndex = AR.zip([0, 1, 2]),
   [hAlignIndex, vAlignIndex]: [Record<HAlign, number>, Record<VAlign, number>] =
     FN.pipe(
       [[...hAlign], [...vAlign]] as [HAlign[], VAlign[]],

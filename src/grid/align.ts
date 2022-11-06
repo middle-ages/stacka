@@ -17,11 +17,10 @@ const expandColumn: BinaryC<number, Pair<number>, Endo<Grid>> =
   ([top, bottom]) =>
   grid => {
     const emptyRow = row.emptyN(width);
-    return [
-      ...AR.replicate(top, emptyRow),
-      ...grid,
-      ...AR.replicate(bottom, emptyRow),
-    ];
+    return AR.replicate(top, emptyRow).concat(
+      grid,
+      AR.replicate(bottom, emptyRow),
+    );
   };
 
 /** Shrink given column from both sides by given number pair */

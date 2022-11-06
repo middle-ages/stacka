@@ -41,10 +41,9 @@ const outerCell = (colIdx: number, rowIdx: number) => (s: string) =>
   pipe(
     s,
     innerCell(colIdx === 1 ? spanWidth : 0, rowIdx === 1 ? spanHeight : 0),
-    pipe(
-      border.sets[colIdx === 2 ? 'line' : rowIdx === 2 ? 'thick' : 'hThick'],
-      border.setFg(rowIdx ? (colIdx ? 'light' : 'magenta') : 'cyan'),
-      border,
+    border.withFg(
+      colIdx === 2 ? 'line' : rowIdx === 2 ? 'thick' : 'hThick',
+      rowIdx ? (colIdx ? 'light' : 'magenta') : 'cyan',
     ),
   );
 

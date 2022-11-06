@@ -1,39 +1,8 @@
 import assert from 'assert';
 import { Unary } from 'util/function';
-import { delay, final, Tailcall, tco } from 'util/tco';
 import { Pair } from 'util/tuple';
 import { chopMinLeft } from './chopMin';
 import { Row } from './types';
-
-interface State {
-  todo: { fst: Row; snd: Row };
-  done: Pair<Row>[];
-}
-
-const step: Tailcall<State> = state => {
-  const {
-      todo: { fst: givenFstTodo, snd: givenSndTodo },
-      done,
-    } = state,
-    [fstTodoLen, sndTodoLen] = [givenFstTodo.length, givenSndTodo.length];
-
-  if (fstTodoLen === 0) {
-    assert(sndTodoLen === 0, 'cannot zip rows of unequal width');
-    return final(state);
-  }
-
-  const [[gotFst, fstTodo], [gotSnd, sndTodo]] = chopMinLeft([
-    givenFstTodo,
-    givenSndTodo,
-  ]);
-
-  return delay(() =>
-    step({
-      todo: { fst: fstTodo, snd: sndTodo },
-      done: [...done, [gotFst, gotSnd]],
-    }),
-  );
-};
 
 /**
  *
@@ -62,7 +31,7 @@ const step: Tailcall<State> = state => {
  * ## Identity Edge Case
  *
  * Consider the case of zipping two rows composed of nothing but double width
- * charactrs, except the 1st that has a narrow character as its head, so that
+ * characters, except the 1st that has a narrow character as its head, so that
  * they are staggered like bricks as pictured below:
  *
  * ```txt
@@ -84,8 +53,22 @@ const step: Tailcall<State> = state => {
  * we return the input unchanged, making `zipWidth` behave like an identity.
  *
  */
-
 export const zipWidth: Unary<Pair<Row>, Pair<Row>[]> = ([fst, snd]) => {
   assert(fst.length === snd.length, 'zipping unequal width');
-  return tco(step({ todo: { fst, snd }, done: [] })).done;
+  let fstTodo = fst,
+    sndTodo = snd;
+
+  const done: Pair<Row>[] = [];
+
+  while (fstTodo.length > 0) {
+    const [[gotFst, newFstTodo], [gotSnd, newSndTodo]] = chopMinLeft([
+      fstTodo,
+      sndTodo,
+    ]);
+    fstTodo = newFstTodo;
+    sndTodo = newSndTodo;
+    done.push([gotFst, gotSnd]);
+  }
+
+  return done;
 };

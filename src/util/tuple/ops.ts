@@ -29,6 +29,11 @@ export const tuple3Map =
   ([a, b, c]) =>
     [f(a), f(b), f(c)];
 
+export const tuple4Map =
+  <T, U>(f: Unary<T, U>): Unary<Tuple4<T>, Tuple4<U>> =>
+  ([a, b, c, d]) =>
+    [f(a), f(b), f(c), f(d)];
+
 export const pairAp =
   <A, B, C>(f: Unary<A, B>, g: Unary<A, C>): Unary<[A, A], [B, C, B, C]> =>
   ([a, b]) =>

@@ -37,4 +37,5 @@ export const normalize: Unary<Color, Rgba> = c =>
       : hwbaToRgba(c)
     : namedToRgba(c);
 
-export const toHwba: Unary<Color, Hwba> = FN.flow(normalize, rgbaToHwba);
+export const toHwba: Unary<Color, Hwba> = FN.flow(normalize, rgbaToHwba),
+  toRgba = normalize;

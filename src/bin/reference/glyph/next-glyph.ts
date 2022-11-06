@@ -51,17 +51,13 @@ if (arg0 === '-h') {
 const [fst, maxDepth] = [arg0 ?? ' ', parseInt(arg1 ?? '2')];
 const start = fst === 'space' ? ' ' : fst;
 
-const { horizontal, vertical } = bitmap.line.dotted,
+const { horizontal, vertical } = bitmap.line.dash.dot,
   tee = bitmap.tee;
 
 const deco = {
   hBranch: style.branch(horizontal),
   vBranch: style.branch(vertical),
-  elbow: FN.pipe(
-    bitmap.roundElbowsFor({ horizontal, vertical }).bottomLeft,
-    FN.pipe(' ', FN.constant, OP.getOrElse),
-    style.branch,
-  ),
+  elbow: style.branch(bitmap.elbows.round.bottomLeft),
   teeRight: style.branch(tee.right),
   teeDown: style.branch(tee.bottom),
 };
@@ -112,7 +108,7 @@ const getNodes = (node: Node): Node[] =>
     : node.next;
 
 const nodeToString = (node: Node): string =>
-  isGlyph(node) ? style.char(node.char) : node.relation;
+  (isGlyph(node) ? style.char(node.char) : node.relation) + '\n';
 
 const deepUnfolder =
   (maxDepth: number) =>
