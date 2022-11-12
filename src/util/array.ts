@@ -5,13 +5,15 @@ import {
   option as OP,
   readonlyArray as RA,
   readonlyNonEmptyArray as NE,
+  readonlyRecord as REC,
+  tuple as TU,
 } from 'fp-ts';
 import { fork } from 'fp-ts-std/Function';
 import { dup, mapBoth, withSnd } from 'fp-ts-std/Tuple';
 import { Endo, Unary } from 'util/function';
 import { Pair, Tuple3 } from 'util/tuple';
 
-export const last = <T>(arr: T[]): T => arr[arr.length - 1] as T,
+export const last = <T>(arr: T[]) => arr.at(-1) as T,
   init = <T>(arr: T[]): T[] => arr.slice(0, arr.length - 1),
   initLast = <T>(arr: T[]): [T[], T] => [init(arr), last(arr)];
 
@@ -95,6 +97,9 @@ export const chunksOf =
   <T>(ts: T[]) =>
     FN.pipe(ts, AR.chunksOf(n)) as T[][];
 
+export const zipU = <A, B>(bs: Array<B>, as: Array<A>): Array<[A, B]> =>
+  AR.zip(as, bs);
+
 /**
  * Chunk a matrix into 2x2 adjacent squares.
  *
@@ -107,9 +112,6 @@ export const chunksOf =
  * there will also some `None` values.
  */
 export const chunk4x = <T>(rows: T[][]): Pair<Pair<OP.Option<T>>>[][] => {
-  const zipU = <A, B>(bs: Array<B>, as: Array<A>): Array<[A, B]> =>
-    AR.zip(as, bs);
-
   const zipAll = <U, V>(u: U[], v: V[]): [OP.Option<U>, OP.Option<V>][] => {
     const max = Math.max(u.length, v.length),
       delta = AR.replicate(max - Math.min(u.length, v.length), OP.none);
@@ -195,11 +197,27 @@ export const withAdjacent = <T>(chain: T[]): Entry<T>[] => {
   ];
 };
 
+export const toTrueRecord = <K extends string>(
+  ks: readonly K[],
+): Record<K, true> =>
+  FN.pipe(ks, FN.pipe(true, withSnd, RA.map), Object.fromEntries);
+
 /** Index a list and returns a function for testing membership  */
 export const membershipTest = <A extends string>(xs: readonly A[]) => {
-  const dict = FN.pipe(xs, RA.map(withSnd(true)), Object.fromEntries) as Record<
-    A,
-    true
-  >;
+  const dict = toTrueRecord(xs);
   return (k: string) => k in dict;
 };
+
+/** Index a list and return a record from value to index */
+export const indexRecord = <A extends string>(xs: readonly A[]) =>
+  FN.pipe(xs, RA.mapWithIndex(FN.untupled(TU.swap)), REC.fromEntries) as Record<
+    A,
+    number
+  >;
+
+export type ByteArray = Uint8ClampedArray;
+
+export const ByteArray = Uint8ClampedArray;
+
+export const emptyByteArray: Unary<number, ByteArray> = n =>
+  new Uint8ClampedArray(n);

@@ -37,7 +37,7 @@ export type OpT = BinOpT<Box>;
 export type OpC = BinOpC<Box>;
 
 /** A function that folds a list of boxes into one */
-export type Cat = Unary<Box[] | readonly Box[], Box>;
+export type Cat = Unary<Box[], Box>;
 
 export type MaybeBox = OP.Option<Box>;
 

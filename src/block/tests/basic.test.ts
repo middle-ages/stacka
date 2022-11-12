@@ -3,7 +3,7 @@ import { align } from 'src/align';
 import { Block, block } from 'src/block';
 import { size } from 'src/geometry';
 import { Pair } from 'util/tuple';
-import { grid } from 'src/grid';
+import * as GR from 'src/grid';
 import { assert, suite, test } from 'vitest';
 
 suite('block basic', () => {
@@ -27,7 +27,7 @@ suite('block basic', () => {
   });
 
   suite('resetSize', () => {
-    const newGrid = grid.parseRow('XY'),
+    const newGrid = GR.parseRow('XY'),
       widerTiny = FN.pipe(tiny, block.grid.set(newGrid));
 
     test('set rows but no reset size', () =>

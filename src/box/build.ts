@@ -1,9 +1,12 @@
 import { function as FN, record as RC } from 'fp-ts';
+import { Size } from 'src/geometry';
 import * as AL from 'src/align';
 import { Backdrop } from 'src/backdrop';
 import * as BL from 'src/block';
+import { Color } from 'src/color';
 import { Grid } from 'src/grid';
-import { Endo, Unary } from 'util/function';
+import * as GR from 'src/grid';
+import { BinaryC, Endo, Unary } from 'util/function';
 import { tree } from 'util/tree';
 import { Box, BoxArgs, BuildBox } from './types';
 
@@ -80,6 +83,10 @@ export const of: Unary<string, Box> = text => buildBox({ text });
 
 /** A 1x1 empty box */
 export const cell: Box = fromRow(' ');
+
+/** A sized box of colored spaced */
+export const repeatBg: BinaryC<Size, Color, Grid> = size =>
+  FN.flow(GR.spaceBg, GR.repeat(size));
 
 export const fromBackdrop: Unary<Backdrop, Box> = backdrop =>
     buildBox({ backdrop }),

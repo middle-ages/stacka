@@ -1,10 +1,9 @@
 import { function as FN } from 'fp-ts';
-import { Size, size as SZ } from 'src/geometry';
-import { Grid, grid } from 'src/grid';
+import { align } from 'src/align';
+import { Size } from 'src/geometry';
+import * as GR from 'src/grid';
+import { Grid } from 'src/grid';
 import { BinaryC } from 'util/function';
-import { center } from './center';
-import { repeat } from './repeat';
-import { stretch } from './stretch';
 import { Backdrop, matchProjection } from './types';
 
 /**
@@ -14,20 +13,28 @@ import { Backdrop, matchProjection } from './types';
  */
 export const paint: BinaryC<Backdrop, Size, Grid> =
   ({ image, project }) =>
-  surfaceSize => {
-    const { width: seedWidth, height: seedHeight } = grid.measureAligned(image);
-
-    if (seedWidth === 0 || seedHeight === 0)
-      return FN.pipe(surfaceSize, SZ.fill(grid.cell.empty));
-
-    return FN.pipe(
-      image,
-      FN.pipe(
-        surfaceSize,
-        FN.pipe(project, matchProjection(stretch, repeat, center)),
-      ),
-    );
-  };
+  size =>
+    GR.isEmpty(image)
+      ? GR.empty()
+      : FN.pipe(
+          image,
+          FN.pipe(
+            size,
+            FN.pipe(
+              project,
+              matchProjection(
+                GR.resizeElastic,
+                GR.repeat,
+                GR.resize(align.middleCenter),
+              ),
+            ),
+          ),
+        );
 
 export const asStrings: BinaryC<Backdrop, Size, string[]> = bd =>
-  FN.flow(paint(bd), grid.asStrings);
+  FN.flow(paint(bd), GR.paint);
+
+export const asStringsWith =
+  (filler: string): BinaryC<Backdrop, Size, string[]> =>
+  bd =>
+    FN.flow(paint(bd), GR.paintWith(filler));

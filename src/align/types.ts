@@ -1,11 +1,11 @@
 import { function as FN, readonlyArray as RA } from 'fp-ts';
 import { flip, uncurry2 } from 'fp-ts-std/Function';
+import { toFst } from 'fp-ts-std/Tuple';
+import { HDir, VDir } from 'src/geometry';
 import { BinaryC, Unary } from 'util/function';
 import { typedFromEntries } from 'util/object';
 import { ucFirst } from 'util/string';
-import { Pair } from 'util/tuple';
-import { HDir, VDir } from 'src/geometry';
-import { toFst } from 'fp-ts-std/Tuple';
+import { Pair, Tuple3 } from 'util/tuple';
 
 export const hAlign = ['left', 'center', 'right'] as const,
   vAlign = ['top', 'middle', 'bottom'] as const;
@@ -57,6 +57,11 @@ export const matchVAlign =
   <R>(top: R, middle: R, bottom: R): Unary<VAlign, R> =>
   v =>
     v === 'top' ? top : v === 'middle' ? middle : bottom;
+
+export const mapHAlign = <R>(f: Unary<HAlign, R>) =>
+    FN.pipe(hAlign, RA.map(f)) as Tuple3<R>,
+  mapVAlign = <R>(f: Unary<VAlign, R>) =>
+    FN.pipe(vAlign, RA.map(f)) as Tuple3<R>;
 
 export type Alignment<
   V extends VAlign = VAlign,

@@ -6,7 +6,6 @@ import {
   show as SH,
   tuple as TU,
 } from 'fp-ts';
-import { showFor } from 'util/fp-ts';
 import { Unary } from 'util/function';
 import { pluck } from 'util/object';
 
@@ -50,7 +49,7 @@ export const eqFix: EqFix = FN.pipe('unfixed', pluck, EQ.contramap);
 
 export const showFix = <F extends HKT.URIS2, E>(
   sh: SH.Show<HFix<F, E>>,
-): SH.Show<Fix<F, E>> => showFor(FN.flow(unfix, sh.show));
+): SH.Show<Fix<F, E>> => ({ show: FN.flow(unfix, sh.show) });
 
 /**
  * ```txt

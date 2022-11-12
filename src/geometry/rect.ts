@@ -1,4 +1,3 @@
-import * as fc from 'fast-check';
 import {
   array as AR,
   eq as EQ,
@@ -213,12 +212,7 @@ export const eqPos: EQ.Eq<Rect> = FN.pipe(PO.eq, EQ.contramap(pos.get)),
     show: ({ pos, size }) => PO.show.show(pos) + ' ' + SZ.show.show(size),
   },
   /** Monoid for the bounding rectangle operation */
-  monoid: MO.Monoid<Rect> = { concat: add, empty },
-  arb: fc.Arbitrary<Rect> = fc.record({
-    pos: PO.arb,
-    size: SZ.arb,
-    zOrder: fc.nat(10),
-  });
+  monoid: MO.Monoid<Rect> = { concat: add, empty };
 //#endregion
 
 //#region query

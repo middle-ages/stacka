@@ -17,10 +17,8 @@ import {
   dir,
   glyph,
   grid,
-  hex,
   pos,
   rect,
-  row,
   size,
   style,
 } from './src/stacka';

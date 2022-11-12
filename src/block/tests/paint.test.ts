@@ -1,67 +1,52 @@
 import { function as FN } from 'fp-ts';
-import { fork } from 'fp-ts-std/Function';
-import { withSnd } from 'fp-ts-std/Tuple';
-import { Align, align } from 'src/align';
-import { block } from 'src/block';
-import { grid as GR } from 'src/grid';
-import { assertDeepEqual } from 'util/chai';
+import { align as AL, Align } from 'src/align';
 import { assert, suite, test } from 'vitest';
+import * as BU from '../build';
+import * as PA from '../paint';
+import * as TY from '../types';
 
 suite('block paint', () => {
   const checkPaint =
-    (h = 3) =>
-    (expect: string[], a: Align) =>
-      test(align.show(a), () =>
-        FN.pipe(
-          ['a', 'ab', 'abcd'],
-          block.fromRows,
-          block.align.set(a),
-          block.height.set(h),
-          block.asStringsWith('.'),
-          withSnd(expect),
-          assertDeepEqual,
+    (height = 3) =>
+    (expect: string[], align: Align) =>
+      test(AL.show(align), () =>
+        assert.deepEqual(
+          FN.pipe(
+            { rows: ['a', 'ab', 'abcd'], align, height },
+            BU.build,
+            PA.asStringsWith('.'),
+          ),
+          expect,
         ),
       );
 
   suite('hAlign', () => {
     const check = checkPaint();
-    check(['a...', 'ab..', 'abcd'], block.defaultAlign);
-    check(['...a', '..ab', 'abcd'], align.bottomRight);
-    check(['.a..', '.ab.', 'abcd'], align.topCenter);
+    check(['a...', 'ab..', 'abcd'], TY.defaultAlign);
+    check(['...a', '..ab', 'abcd'], AL.bottomRight);
+    check(['.a..', '.ab.', 'abcd'], AL.topCenter);
   });
 
   suite('vAlign', () => {
     const check = checkPaint(5);
-    check(['....', '....', 'a...', 'ab..', 'abcd'], block.defaultAlign);
-    check(['....', 'a...', 'ab..', 'abcd', '....'], align.middleLeft);
-    check(['.a..', '.ab.', 'abcd', '....', '....'], align.topCenter);
-    check(['....', '.a..', '.ab.', 'abcd', '....'], align.middleCenter);
+    check(['....', '....', 'a...', 'ab..', 'abcd'], TY.defaultAlign);
+    check(['....', 'a...', 'ab..', 'abcd', '....'], AL.middleLeft);
+    check(['.a..', '.ab.', 'abcd', '....', '....'], AL.topCenter);
+    check(['....', '.a..', '.ab.', 'abcd', '....'], AL.middleCenter);
   });
 
   suite('shrink', () => {
     const check = checkPaint(1);
 
-    check(['abcd'], block.defaultAlign);
-    check(['a...'], align.topLeft);
-    check(['.ab.'], align.middleCenter);
+    check(['abcd'], TY.defaultAlign);
+    check(['a...'], AL.topLeft);
+    check(['.ab.'], AL.middleCenter);
   });
 
   suite('double width characters', () => {
-    const iut = block.fromRow('🙂'),
-      [grid, size] = FN.pipe(iut, fork([block.grid.get, block.size.get]));
-
-    test('size', () => assert.deepEqual(FN.pipe(iut, block.width.get), 2));
-
-    test('align', () => {
-      const aligned = FN.pipe(
-        grid,
-        FN.pipe(size, GR.align(align.bottomLeft)),
-        GR.asString,
-      );
-      assert.deepEqual(aligned, '🙂');
-    });
+    const iut = BU.fromRow('🙂');
 
     test('paint', () =>
-      assert.deepEqual(FN.pipe(iut, block.asStringsWith('.')), ['🙂']));
+      assert.deepEqual(FN.pipe(iut, PA.asStringsWith('.')), ['🙂']));
   });
 });

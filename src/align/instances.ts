@@ -15,7 +15,7 @@ import { BinOp, Unary, uncurry2T } from 'util/function';
 import { typedFromEntries } from 'util/object';
 import { Align, hAlign, HAlign, vAlign, VAlign } from './types';
 
-const alignSym = {
+export const alignSym = {
   top: {
     left: '⭶',
     center: '⭱',
@@ -32,6 +32,9 @@ const alignSym = {
     right: '⭸',
   },
 };
+
+export const hAlignSym = { left: '⭰', center: '×', right: '⭲' },
+  vAlignSym = { top: '⭱', middle: '×', bottom: '⭳' };
 
 const zipIndex = AR.zip([0, 1, 2]),
   [hAlignIndex, vAlignIndex]: [Record<HAlign, number>, Record<VAlign, number>] =
@@ -72,11 +75,14 @@ const minSorted: BinOp<Align> = min(ord);
 
 export const exportInstances = {
   Show,
-  show: Show.show,
-  hAlignOrd,
-  vAlignOrd,
-  ord,
-  minSorted,
-  equals,
+  alignSym,
   eq,
+  equals,
+  hAlignOrd,
+  hAlignSym,
+  minSorted,
+  ord,
+  show: Show.show,
+  vAlignOrd,
+  vAlignSym,
 } as const;

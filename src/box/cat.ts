@@ -1,4 +1,4 @@
-import assert from 'assert';
+// import assert from 'assert';
 import * as AL from '../align';
 import { array as AR, function as FN } from 'fp-ts';
 import { append, head, headTail, last } from 'util/array';
@@ -31,10 +31,10 @@ export const catOpsInto: BinaryC<Box, OpC[], Cat> =
         PA.sizeFromNodes,
       );
 
-    assert(
-      placeOps.length + 1 === len,
-      `ops (${placeOps.length}) + 1 ≠ boxes (${len})`,
-    );
+    //    assert(
+    //      placeOps.length + 1 === len,
+    //      `ops (${placeOps.length}) + 1 ≠ boxes (${len})`,
+    //    );
 
     const ops = FN.pipe(
       placeOps,
@@ -56,7 +56,8 @@ export const catOpsInto: BinaryC<Box, OpC[], Cat> =
             const x = FN.pipe(
               acc,
               last,
-              withSnd<Box>(cur)<Box>,
+              //  withSnd<Box>(cur)<Box>,
+              withSnd(cur),
               op,
               //AR.append(acc),
               append(acc),

@@ -1,80 +1,87 @@
-import { array as AR, nonEmptyArray as NE } from 'fp-ts';
+import { array as AR, nonEmptyArray as NEA } from 'fp-ts';
 import { add } from 'fp-ts-std/Number';
 import { flow, Lazy, pipe } from 'fp-ts/function';
 import { border, Box, box, color, Color, termSize } from 'src/stacka';
 
-const phase: number = (() => {
-  const p = parseInt(process.argv[2]);
-  return Number.isNaN(p) ? 0 : p;
+const phases: number = (() => {
+  const final = parseInt(process.argv[2]);
+  return Number.isInteger(final) ? final : 1;
 })();
 
-/* Stacking three charts on top of each other */
+/* Stacking charts on top of each other */
 
-const innerBarWidth = 3, // bar width > 0, or ≥0 if has border
+const innerBarWidth = 2, // bar width > 0, or ≥0 if has border
   barGap = -1, // gap between bars, negative means shifted into prev bar
-  waveCount = 3, // how may waves?
-  margin = 2,
-  nextColor: Lazy<Color> = color.cycle([
-    color.hex('#05af'),
-    color.hex('#4742'),
-    color.hex('#f80a'),
-  ]),
-  blend = box.blendScreen;
+  waveCount = 2, // how may waves?
+  topMargin = 3,
+  hMargin = 1,
+  nextColor: Lazy<Color> = color.cycle(['blueviolet', 'orangered']);
 
 const fn = Math.sin;
 
 const [termWidth, termHeight] = termSize(),
-  borderWidth = 2,
-  barWidth = barGap + innerBarWidth + borderWidth,
-  barCount = Math.floor((termWidth - 2 * margin - waveCount) / barWidth),
-  domain = NE.range(0, barCount - 1),
-  waves = NE.range(0, waveCount - 1);
+  borderWidth = 1,
+  termPad = 2 * hMargin + 2 * borderWidth,
+  barWidth = barGap + innerBarWidth + 2 * borderWidth,
+  barCount = Math.floor((termWidth - termPad - 2) / barWidth),
+  domain = NEA.range(0, barCount - 1),
+  waves = NEA.range(0, waveCount - 1);
 
-// inject the X-axis into the domain of `fn`: from `Turns` unit to `Rad`
-const inject =
-    (waveIdx: number) =>
-    (x: number): number =>
-      2 *
-      Math.PI *
-      (waveIdx / waveCount + (x + phase * (waveIdx % 2 ? -1 : 1)) / barCount),
-  // project the Y-axis from the range of `fn`: scale to term height
-  project = (y: number): number =>
-    1 + (y + 1) * (1 / 2) * (termHeight - 2 * margin - 6);
+const wave =
+  (phase: number) =>
+  (waveIdx: number): Box => {
+    // inject the X-axis into the domain of `fn`: from `Turns` unit to `Rad`
+    const inject =
+      (waveIdx: number) =>
+      (x: number): number =>
+        2 *
+        Math.PI *
+        (waveIdx / waveCount + (x + phase * (waveIdx % 2 ? -1 : 1)) / barCount);
 
-const bar =
-  (waveIdx: number) =>
-  (color: Color) =>
-  (height: number): Box =>
-    pipe(
-      box.empty,
-      box.size.set({ width: innerBarWidth, height }),
-      pipe(
-        border.sets[waveIdx === waveCount - 1 ? 'thick' : 'line'],
-        border.mask.openB,
-        border.setFg(color),
-        border,
-      ),
+    // project the Y-axis from the range of `fn`: scale to term height
+    const project = (y: number): number =>
+      1 + (y + 1) * (1 / 2) * (termHeight - topMargin - 2);
+
+    // build one bar
+    const bar =
+      (waveIdx: number) =>
+      (color: Color) =>
+      (height: number): Box =>
+        pipe(
+          box.empty,
+          box.size.set({ width: innerBarWidth, height }),
+          pipe(
+            border.sets[waveIdx === waveCount - 1 ? 'thick' : 'line'],
+            border.mask.openB,
+            border.setFg(color),
+            border,
+          ),
+        );
+
+    const color = nextColor();
+
+    return pipe(
+      pipe(domain, AR.map(flow(inject(waveIdx), fn, project, Math.round))),
+      pipe(color, bar(waveIdx), AR.map),
+      box.catRightOfGap(barGap),
+      pipe(waveIdx, add, box.left.mod),
+      box.combineOver,
     );
+  };
 
-const wave = (waveIdx: number): Box => {
-  const color = nextColor();
-  return pipe(
-    pipe(domain, AR.map(flow(inject(waveIdx), fn, project, Math.round))),
-    pipe(color, bar(waveIdx), AR.map),
-    box.catRightOfGap(barGap),
-    pipe(waveIdx, add, box.left.mod),
-    blend,
+const atPhase = (phase: number) =>
+  pipe(
+    waves,
+    pipe(phase, wave, AR.map),
+    box.branch,
+    box.blend.set('screen'),
+    box.subHeight(topMargin),
+    border.colored('hMcGugan', [0xff_30_30_30, 0xff_08_08_08]),
+    box.marginLeft(hMargin),
+    box.print,
   );
-};
 
-pipe(
-  waves,
-  AR.map(wave),
-  box.branch,
-  blend,
-  box.alignT,
-  box.subHeight(1),
-  border.withFg('hMcGugan', 'dark'),
-  box.margin(margin),
-  box.print,
-);
+for (let phase = 0; phase < phases; phase++) {
+  process.stdout.cursorTo(0, 3);
+  atPhase(phase);
+}

@@ -8,14 +8,14 @@ suite('border part', () => {
   const iut = border.sets.line;
 
   testBorder('noHlines', border.mask.noHLines(iut), [
-    '┌ ┐', //
+    '┌.┐', //
     '│X│',
-    '└ ┘',
+    '└.┘',
   ]);
 
   testBorder('noVlines', border.mask.noVLines(iut), [
     '┌─┐', //
-    ' X ',
+    '.X.',
     '└─┘',
   ]);
 
@@ -30,14 +30,14 @@ suite('border part', () => {
   );
 
   testBorder('noCorners', border.mask.noCorners(iut), [
-    ' ─ ', //
+    '.─.', //
     '│X│',
-    ' ─ ',
+    '.─.',
   ]);
 
   testBorder('noLines', border.mask.noLines(iut), [
-    '┌ ┐', //
-    ' X ',
-    '└ ┘',
+    '┌.┐', //
+    '.X.',
+    '└.┘',
   ]);
 });

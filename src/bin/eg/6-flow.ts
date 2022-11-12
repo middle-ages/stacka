@@ -24,7 +24,7 @@ const nDigits = (n: number): string =>
     NEA.range(0, n)
       .map(s => s.toString())
       .join(''),
-    color.fg(color.hex('#69a')),
+    color.fg(0xff_a0_90_60),
   );
 
 const child: (idx: number) => Box = flow(nDigits, box.fromRow, border.hMcGugan);
@@ -36,10 +36,10 @@ const parent = (width: number): Box =>
     boxes.flow.of({
       placeH: box.catRightOfTop,
       placeV: box.catBelow,
-      clipMark: pipe('darkRed', block.setGridFg, box.mapBlock),
+      clipMark: pipe('darkred', block.setGridFg, box.mapBlock),
       available: 3 * width + 2,
     }),
-    border.withFg('line', 'dark'),
+    border.withFg('line', 'darkgray'),
   );
 
 pipe(

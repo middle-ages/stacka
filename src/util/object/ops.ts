@@ -4,15 +4,9 @@ import {
   readonlyArray as RA,
   tuple as TU,
 } from 'fp-ts';
-import { withSnd } from 'fp-ts-std/Tuple';
-import { Endo, Unary } from 'util/function';
-import { typedKeys } from './get';
-import { FromEntries, HasKeyEndo, ObjectEntries, ObjectEntry } from './types';
-
-export type HasListKeyMod<K extends PropertyKey, V> = Unary<
-  Endo<V>,
-  HasKeyEndo<K, V[]>
->;
+import { toSnd, withSnd } from 'fp-ts-std/Tuple';
+import { Unary } from 'util/function';
+import { FromKeys, FromEntries, ObjectEntries, ObjectEntry } from './types';
 
 export const typedEntries = <T extends {}>(o: T): ObjectEntries<T> =>
   Object.entries(o) as any;
@@ -32,11 +26,6 @@ export const objectMono =
   <K extends string>(keys: readonly K[]) =>
   <V>(v: V): Record<K, V> =>
     monoObject(v)(keys);
-
-export const mapKeysOf =
-  <T extends {}>() =>
-  <R>(f: Unary<PropertyKey & keyof T, R>): Unary<T, readonly R[]> =>
-    FN.flow(typedKeys, RA.map(f));
 
 export const mapValuesOf =
   <K extends PropertyKey, V>() =>
@@ -61,3 +50,12 @@ export const mapEntriesOf =
   <T extends {}>() =>
   <R>(f: Unary<ObjectEntry<T>, R>): Unary<T, readonly R[]> =>
     FN.flow(typedEntries, RA.map(f));
+
+export const fromKeys =
+  <T extends readonly any[]>(keys: T): FromKeys<T[number]> =>
+  f =>
+    FN.pipe(
+      keys,
+      RA.map(k => FN.pipe(k, toSnd(f))),
+      typedFromEntries,
+    );

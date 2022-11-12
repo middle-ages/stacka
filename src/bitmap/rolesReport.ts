@@ -3,7 +3,7 @@ import { array as AR, function as FN } from 'fp-ts';
 import { uncurry2 } from 'fp-ts-std/Function';
 import { append, unlines } from 'fp-ts-std/String';
 import { toSnd } from 'fp-ts-std/Tuple';
-import { color as CO } from 'src/color';
+import * as CO from 'src/color';
 import { addBefore, chunksOf } from 'util/array';
 import { Binary, BinaryC, BinOpC } from 'util/function';
 import { Matrix, resolution } from './data';
@@ -11,13 +11,15 @@ import { quadResWith } from './quadRes';
 import { registry as reg } from './registry';
 import { BitmapRole } from './role';
 
-const color = CO.of(['darkBlue', 'light']),
-  underline = CO.of(['darkGrey', 'grey']),
+const darkBlue = 0xff_3a_00_00;
+
+const color = CO.of([darkBlue, 'white']),
+  underline = CO.of([CO.grays[75], CO.grays[92]]),
   fence = underline('|'), // ▐
   roleColor = CO.fg('orange'),
-  px = CO.of(['dark', 'light']),
-  leftSpace = FN.pipe(' ', CO.bg('lighterGrey')),
-  rightSpace = FN.pipe('  ', CO.bg('lighterGrey'));
+  px = CO.of([darkBlue, CO.grays[97]]),
+  leftSpace = FN.pipe(' ', CO.bg(CO.grays[85])),
+  rightSpace = FN.pipe('  ', CO.bg(CO.grays[85]));
 
 // zip and concat a row pair
 const zipRows: BinOpC<string[]> = left => right =>

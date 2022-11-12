@@ -7,7 +7,7 @@ suite('block instances', () => {
     test('empty', () =>
       assert.deepEqual(
         block.show(block.empty),
-        `▲0:◀0 ↔0:↕0 ⭹ ${defaultBlendMode} 0ˣ0 0%`,
+        `▲0:◀0 ↔0:↕0 ⭹ ${defaultBlendMode} 0ˣ0 0% non-empty`,
       ));
   });
 });

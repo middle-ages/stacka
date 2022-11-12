@@ -1,7 +1,7 @@
 import { array as AR, function as FN } from 'fp-ts';
 import { join } from 'fp-ts-std/Array';
 import { split } from 'fp-ts/lib/string';
-import { bitmap, Color, border, Box, box, color } from 'src/stacka';
+import { bitmap, border, Box, box, color } from 'src/stacka';
 
 const rawArgs = process.argv.slice(3).join('');
 
@@ -10,37 +10,32 @@ const args = (
 )
   .split(',')
   .map(split(':'))
-  .map(
-    // spaces are gobbled up by node.js argument splitting
-    // if we see empty label, it is space
-    ([fst, snd]) => [fst === '' ? ' ' : fst, snd] as const,
-  ) as [string, string][];
+  .map(([fst, snd]) => [fst === '' ? ' ' : fst, snd] as const) as [
+  string,
+  string,
+][];
 
 const colors = {
-  panelBg: 'light',
-  valueBg: 'lighter',
-  frameBg: 'darkest',
-  sepFg: 'black',
-  args: ['grey', 'darkGrey'],
-  frame: ['darker', 'dark'],
+  panelBg: color.grays[94],
+  sepFg: color.grays[15],
+  frame: [color.grays[15], color.grays[4]],
   innerSepFg: 'blue',
-  argKey: color.hex('#447f0088'),
-  argValue: color.hex('#7f004488'),
+  argKey: 'darkgreen',
+  argValue: 'darkred',
 } as const;
 
-const addBorder = (colors: readonly [Color, Color]) =>
-  border.colored('halfSolidNear', [...colors]);
+const addBorder = border.colored('halfSolidNear', [...colors.frame]);
 
-const nextColor = color.rainbow8Gen();
+const nextColor = color.rainbow6Gen();
 
 const sep = FN.pipe(
     bitmap.line.vertical,
     color.of([colors.sepFg, colors.panelBg]),
   ),
-  innerSep = FN.pipe(':', color.of([colors.innerSepFg, colors.panelBg]));
+  innerSep = FN.pipe(':', color.fg(colors.innerSepFg));
 
 const argBox = box({
-  apply: addBorder(colors.args),
+  apply: FN.flow(box.colorBg(colors.panelBg), addBorder),
   rows: FN.pipe(
     args,
     AR.map(showArg),
@@ -53,9 +48,8 @@ FN.pipe(
   args,
   AR.mapWithIndex(bar),
   box.catSnugRightOf,
-  box.blend.set('screen'),
-  box.setGridBg(colors.frameBg),
-  addBorder(colors.frame),
+  box.blendScreen,
+  addBorder,
   box.belowCenter(argBox),
   box.margin(2),
   box.print,
@@ -68,20 +62,22 @@ function bar(idx: number, [name, rawHeight]: [string, string]): Box {
     throw new Error(`Cannot parse as Int⁺: “${height}” for “${name}”`);
 
   return box({
-    row: FN.pipe(name, color.bg(colors.sepFg)),
+    row: name,
     height: height + 1, // 1 character for the bar label
-    apply: border.withFg(idx % 2 ? 'hThick' : 'vThick', nextColor()),
+    apply: FN.flow(
+      border.withFg(
+        idx % 2 ? 'hThick' : 'vThick',
+        color.semiOpaque(nextColor()),
+      ),
+    ),
   });
 }
 
 function showArg([name, height]: [string, string]): string {
   return FN.pipe(
     [
-      FN.pipe(
-        name.replace(/^ $/, '␣'),
-        color.of([colors.argKey, colors.valueBg]),
-      ),
-      FN.pipe(height.padStart(2), color.of([colors.argValue, colors.valueBg])),
+      FN.pipe(name.replace(/^ $/, '␣'), color.fg(colors.argKey)),
+      FN.pipe(height.padStart(2), color.fg(colors.argValue)),
     ],
     join(innerSep),
   );

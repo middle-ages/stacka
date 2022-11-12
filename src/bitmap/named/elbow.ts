@@ -1,4 +1,4 @@
-import assert from 'assert';
+//import assert from 'assert';
 import { array as AR, function as FN, tuple as TU } from 'fp-ts';
 import { corner, Corners } from 'src/geometry';
 import { Unary } from 'util/function';
@@ -30,13 +30,13 @@ export const round = FN.pipe(roundBySharp, typedValues, corner.fromTuple);
 export const sharp = FN.pipe(sharpByRound, typedValues, corner.fromTuple);
 
 const fromQuad: Unary<string, Corners> = quad => {
-  assert(quad.length === 4, `quad with length≠4: “${quad}”`);
+  // assert(quad.length === 4, `quad with length≠4: “${quad}”`);
   const [topLeft, topRight, bottomLeft, bottomRight] = Array.from(quad);
   return { topLeft, topRight, bottomLeft, bottomRight };
 };
 
 const fromPair: Unary<string, Corners> = pair => {
-  assert(pair.length === 4, `quad with length≠4: “${pair}”`);
+  // assert(pair.length === 4, `quad with length≠4: “${pair}”`);
   const [topLeft, topRight] = Array.from(pair);
   return { topLeft, topRight, bottomLeft: topRight, bottomRight: topLeft };
 };

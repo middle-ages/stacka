@@ -2,7 +2,7 @@ import { Backdrop } from 'src/backdrop';
 import { bitmap } from 'src/bitmap';
 import { MaybeBox } from 'src/box';
 import { Bordered, Dir, Directed, Oriented } from 'src/geometry';
-import { Cell } from 'src/grid';
+import { Cell } from 'src/cell';
 import { membershipTest } from 'util/array';
 import { Tuple3 } from 'util/tuple';
 

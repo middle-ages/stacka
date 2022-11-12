@@ -1,7 +1,7 @@
 import { fork } from 'fp-ts-std/Function';
 import { flow, tupled } from 'fp-ts/lib/function';
 import { assert } from 'vitest';
-import { Effect, Unary, VoidEffect } from './function';
+import { Effect, Unary } from './function';
 import { Pair } from './tuple';
 
 /** Assert first & second items in a pair are identical */
@@ -23,5 +23,5 @@ export const isSameForAll =
   input =>
     input.forEach(isSame(iut, oracle));
 
-export const blowsStack: Effect<VoidEffect> = f =>
+export const blowsStack: Effect<() => void> = f =>
   assert.throws(f, /stack size exceeded/);

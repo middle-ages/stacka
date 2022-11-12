@@ -1,6 +1,6 @@
 import { function as FN } from 'fp-ts';
 import { add, negate } from 'fp-ts-std/Number';
-import { Box, box, BoxSet, BuildBox, Cat } from 'src/box';
+import { Box, box as BX, BoxSet, BuildBox, Cat } from 'src/box';
 import { Endo, Unary } from 'util/function';
 import { Pair } from 'util/tuple';
 import { termWidth as getTermWidth } from 'src/term';
@@ -8,7 +8,7 @@ import * as FL from './flow';
 
 /** Sets the given box width to terminal width minus given margin */
 export const marginsToTerm: BoxSet<number> = n =>
-  FN.pipe(n, negate, add(getTermWidth()), box.width.set);
+  FN.pipe(n, negate, add(getTermWidth()), BX.width.set);
 
 /** Sets the given box width to terminal width */
 export const sizeToTerm: Endo<Box> = marginsToTerm(0);
@@ -17,7 +17,22 @@ export const sizeToTerm: Endo<Box> = marginsToTerm(0);
  * Given a box constructor, transforms it so that the boxes it creates will be
  * as wide as the terminal
  */
-export const termWidth: Endo<BuildBox> = build => FN.flow(build, sizeToTerm);
+export const box: Endo<BuildBox> = build => args =>
+  build({ ...args, width: getTermWidth() });
+
+/**
+ * Given a box constructor, transforms it so that the boxes it creates will be
+ * as wide as the terminal less twice the given margins
+ */
+export const marginBox: Unary<number, Endo<BuildBox>> =
+  margin =>
+  build =>
+  ({ apply, ...args }) =>
+    build({
+      ...args,
+      width: getTermWidth() - 2 * margin,
+      apply: FN.flow(BX.alignGrid, apply ?? FN.identity),
+    });
 
 export type WinFlowConfig = Partial<Omit<FL.FlowConfig, 'available'>>;
 

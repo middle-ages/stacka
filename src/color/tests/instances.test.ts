@@ -1,23 +1,22 @@
 import * as laws from 'fp-ts-laws';
-import { color } from 'src/color';
-import { testProp } from 'util/test';
 import { assert, suite, test } from 'vitest';
+import * as color from '../color';
+import { colorBinArb, rgbaColorArb } from './helpers';
 
 suite('color instances', () => {
   test('show', () =>
-    assert.equal(color.show.show('red'), 'R:255 G:0 B:0 A:1.00'));
-
-  suite('eq', () => {
-    testProp('color eq', [color.arb], c => color.eq.equals(c, c));
-  });
+    assert.equal(
+      color.show.show(color.fromName('red')),
+      'R:255 G:0 B:0 A:1.00',
+    ));
 
   suite('laws', () => {
-    test('eq', () => laws.eq(color.eq, color.arb));
+    test('eq', () => laws.eq(color.eq, rgbaColorArb));
 
     test('over monoid', () =>
-      laws.monoid(color.monoid, color.maybeEq, color.maybeArb));
+      laws.monoid(color.overMonoid, color.eq, colorBinArb));
 
     test('under monoid', () =>
-      laws.monoid(color.underMonoid, color.maybeEq, color.maybeArb));
+      laws.monoid(color.underMonoid, color.eq, colorBinArb));
   });
 });

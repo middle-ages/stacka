@@ -1,6 +1,6 @@
 import { function as FN, option as OP } from 'fp-ts';
 import { applyEvery, fork } from 'fp-ts-std/Function';
-import { mapBoth, toSnd } from 'fp-ts-std/Tuple';
+import { dup, mapBoth, toSnd } from 'fp-ts-std/Tuple';
 import { Box, MaybeBox } from 'src/box';
 import {
   borderDir,
@@ -12,7 +12,7 @@ import {
   orientations,
 } from 'src/geometry';
 import { BinaryC, Endo, Unary } from 'util/function';
-import { copyFromWith, ModLens, modLens } from 'util/lens';
+import { copyFromLensWith, ModLens, modLens } from 'util/lens';
 import { typedFromEntries } from 'util/object';
 import { Pair, pairFlow, Tuple4 } from 'util/tuple';
 import { Border } from './types';
@@ -67,5 +67,6 @@ export const [setHParts, setVParts]: Pair<Unary<Box, Endo<Border>>> = [
 
 export const copyPart: BinaryC<BorderDir, Pair<Border>, Border> = FN.flow(
   partAt,
-  copyFromWith<MaybeBox>(FN.identity),
+  dup,
+  copyFromLensWith<MaybeBox>(FN.identity),
 );

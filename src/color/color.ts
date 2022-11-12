@@ -1,44 +1,19 @@
-import * as builders from './build';
-import * as convert from './convert';
-import { exportNamed } from './named';
-import * as ops from './ops';
-import { fg } from './ops';
-import * as palette from './palette';
-import * as hexExports from './hex/ops';
-import * as lens from './lens';
-import * as blend from './blend';
-import * as instances from './instances';
-import * as types from './types';
-
+export * from './ops';
 export * from './types';
-export * from './hex/types';
-
-export { hex } from './hex/ops';
-
-const fns = {
-  ...types,
-  ...builders,
-  ...lens,
-  ...convert,
-  ...exportNamed,
-  ...ops,
-  ...palette,
-  ...blend,
-  ...instances,
-  ...hexExports,
-  hex: hexExports.hex,
-};
+export * from './lens';
+export * from './opacity';
+export * from './paint';
+export * from './palette';
+export * from './blend';
+export * from './instances';
 
 export type {
-  ColorPair,
-  Color,
-  LayerColor,
-  MaybeColor,
-  NamedColor,
-} from './named';
+  Rgba,
+  ColorBin,
+  RgbChannel,
+  Channel,
+  RgbTuple,
+  RgbaTuple,
+} from './rgba';
 
-export type color = typeof fg & typeof fns;
-
-export const color = fg as color;
-
-Object.assign(color, fns);
+export type { HslChannel, HslaChannel, Hsl } from './hsla';

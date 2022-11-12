@@ -45,8 +45,3 @@ export const pluckFrom =
   <K extends string>(k: K) =>
   <T extends HasKey<K, T[K]>>(): Unary<T, T[K]> =>
     pluck(k);
-
-export const unaryObject =
-  <K extends PropertyKey>(k: K) =>
-  <V>(v: V) =>
-    ({ [k]: v } as Record<K, V>);

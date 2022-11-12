@@ -1,34 +1,29 @@
 import {
-  number as NU,
-  option as OP,
-  nonEmptyArray as NEA,
   array as AR,
   function as FN,
+  nonEmptyArray as NEA,
+  number as NU,
+  option as OP,
 } from 'fp-ts';
+import { maximum } from 'fp-ts-std/Array';
 import { fork, uncurry2 } from 'fp-ts-std/Function';
 import { add } from 'fp-ts-std/Number';
 import { mapBoth } from 'fp-ts-std/Tuple';
-import { backdrop } from 'src/backdrop';
+import * as backdrop from 'src/backdrop';
 import { bitmap } from 'src/bitmap';
 import { box } from 'src/box';
 import { Corner } from 'src/geometry';
+import * as grid from 'src/grid';
 import { Endo, Unary } from 'util/function';
 import { Pair, pairFlow } from 'util/tuple';
 import * as edge from './edge';
 import * as part from './part';
 import { Border } from './types';
-import { grid } from '../grid';
-import { maximum } from 'fp-ts-std/Array';
 
 export const roundCorner: Unary<Corner, Endo<Border>> = c =>
   FN.pipe(
     {
-      backdrop: FN.pipe(
-        bitmap.round[c],
-        grid.cell.parseRow,
-        AR.of,
-        backdrop.center,
-      ),
+      backdrop: FN.pipe(bitmap.round[c], grid.parseRow, backdrop.center),
       width: 1,
       height: 1,
     },

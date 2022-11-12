@@ -2,13 +2,8 @@ import { FunctionN } from 'fp-ts/function';
 import { Endomorphism } from 'fp-ts/lib/Endomorphism';
 import { Kind, URIS } from 'fp-ts/lib/HKT';
 
-export type { Lazy, Predicate } from 'fp-ts/function';
-
 export type EndoOf<T> = <U extends T>(src: U) => U;
 export type Endo<T> = Endomorphism<T>;
-export type NonEmptyEndo<T> = (fst: T, ...rest: T[]) => T[];
-
-export type Fn<A extends any[], B> = FunctionN<A, B>;
 
 export type Unary<Q, R> = FunctionN<[Q], R>;
 export type UnaryRest<Q, R> = (...args: Q[]) => R;
@@ -23,8 +18,4 @@ export type BinOpT<P> = Unary<[P, P], P>;
 
 export type Ternary<S, P, Q, R> = FunctionN<[S, P, Q], R>;
 
-export type PartialEndo<V> = Unary<V | undefined, V>;
-export type PartialUnary<P, R> = (p?: Partial<P>) => R;
-
 export type Effect<T> = Unary<T, void>;
-export type VoidEffect = () => void;

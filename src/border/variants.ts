@@ -1,15 +1,16 @@
 import { array as AR, function as FN, option as OP, record as RC } from 'fp-ts';
-import { applyEvery, fork } from 'fp-ts-std/Function';
+import { applyEvery, curry2, fork } from 'fp-ts-std/Function';
 import { mapBoth, withSnd } from 'fp-ts-std/Tuple';
-import { backdrop } from 'src/backdrop';
+import * as backdrop from 'src/backdrop';
 import { bitmap } from 'src/bitmap';
-import { Box, box, BoxSet } from 'src/box';
-import { Color, color } from 'src/color';
-import { dir, Orient, corner } from 'src/geometry';
-import { typedFromEntries } from 'util/object';
+import { Box, box, BoxSet, MaybeBox } from 'src/box';
+import * as color from 'src/color';
+import { Color } from 'src/color';
+import { corner, Cornered, dir, Directed, Orient } from 'src/geometry';
 import { apply1, BinaryC, Endo, Unary } from 'util/function';
+import { typedFromEntries } from 'util/object';
 import { Pair } from 'util/tuple';
-import { grid } from '../grid';
+import * as grid from '../grid';
 import { apply } from './apply';
 import { mask } from './mask';
 import { sets } from './sets';
@@ -28,11 +29,7 @@ export const big: Endo<Box> = FN.flow(
 /** Nest a border list with the 1st as the innermost */
 export const nest: BoxSet<Border[]> = FN.flow(AR.map(apply), applyEvery);
 
-const fromBackdropChar = FN.flow(
-  grid.cell.parseRow,
-  AR.of,
-  box.fromBackdropImage,
-);
+const fromBackdropChar = FN.flow(grid.parseRow, box.fromBackdropImage);
 
 const [thin, thick]: Pair<Orient> = [
   bitmap.line.dash.wide,
@@ -54,10 +51,10 @@ export const [hRule, hRuleThick] = FN.pipe(
 export const pad: Unary<number, Endo<Box>> = n =>
   nest(AR.replicate(n, sets.space));
 
-export const checkeredNear: Unary<Color, Border> = bg => {
+export const checkeredNear: Unary<Pair<Color>, Border> = ([bg, light]) => {
   const checker: Unary<string, Pair<string>> = s =>
     FN.pipe(
-      [...(['black', 'lightGrey'] as const)],
+      [...([light, 'black'] as const)],
       mapBoth(FN.flow(withSnd(bg), color.of, apply1(s)<Endo<string>>)),
     );
 
@@ -67,21 +64,28 @@ export const checkeredNear: Unary<Color, Border> = bg => {
     RC.map(checker),
   );
 
-  return {
-    ...FN.pipe(
-      corner.map(withSnd(OP.some(box.fromRow(FN.pipe(' ', color.bg(bg)))))),
-      typedFromEntries,
-    ),
-    ...FN.pipe(
-      {
-        left: right,
-        right: left,
-        top: [bottom.join('')],
-        bottom: [top.join('')],
-      },
-      RC.map(
-        FN.flow(grid.parseRows, backdrop.repeat, box.fromBackdrop, OP.some),
-      ),
-    ),
-  };
+  const rowsToBox = FN.flow(
+    grid.parseRows,
+    backdrop.repeat,
+    box.fromBackdrop,
+    OP.some,
+  );
+
+  const corners: Cornered<MaybeBox> = FN.pipe(
+    corner.map(withSnd(box.fromRow(FN.pipe(bitmap.solid, color.fg(bg))))),
+    typedFromEntries,
+    RC.map(OP.some),
+  );
+
+  const dirs: Directed<MaybeBox> = FN.pipe(
+    {
+      left: right,
+      right: left,
+      top: [bottom.join('')],
+      bottom: [top.join('')],
+    },
+    FN.pipe('center', curry2(rowsToBox), RC.map),
+  );
+
+  return { ...corners, ...dirs };
 };

@@ -3,16 +3,10 @@ import { Effect, Endo, Unary } from 'util/function';
 
 export type HasTotalKey<K extends PropertyKey, V> = { [k in K]: V };
 
-export type HasPartialKey<K extends PropertyKey, V> = { [k in K]?: V };
 export type HasKey<K extends PropertyKey, V> = HasTotalKey<K, V>;
-
-export type HasKeys<KS extends PropertyKey[]> = {
-  [K in KS[number]]: { K: unknown };
-};
 
 export type HasKeyEndo<K extends PropertyKey, V> = Endo<HasKey<K, V>>;
 
-export type SetValueOf<K extends PropertyKey, V> = (v: V) => HasKeyEndo<K, V>;
 export type SetValue = <K extends PropertyKey>(
   k: K,
 ) => <V>(v: V) => HasKeyEndo<K, V>;
@@ -84,6 +78,5 @@ type EntryToRecord<T extends readonly [PropertyKey, any]> = T extends T
   : never;
 
 export type SetterOf<T extends {}, K extends keyof T> = Unary<T[K], Endo<T>>;
-export type SetterListOf<T extends {}> = ValueList<{
-  [K in keyof T]: SetterOf<T, K>;
-}>;
+
+export type FromKeys<K extends string> = <R>(f: Unary<K, R>) => Record<K, R>;

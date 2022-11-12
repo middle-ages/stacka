@@ -1,7 +1,7 @@
 import { array as AR, function as FN, option as OP } from 'fp-ts';
 import { join } from 'fp-ts-std/Array';
 import { unlines } from 'fp-ts-std/String';
-import { bitmap, color as co, Glyph, glyph, GlyphRelation } from 'src/stacka';
+import { bitmap, color as CO, Glyph, glyph, GlyphRelation } from 'src/stacka';
 import * as TR from 'util/tree';
 
 /**
@@ -26,14 +26,14 @@ import * as TR from 'util/tree';
 
 const [arg0, arg1] = [process.argv[2], process.argv[3]];
 
-const color = {
-  bg: { char: 'light' },
-  fg: { char: 'darkBlue', branch: 'darkGrey' },
+const colors = {
+  bg: { char: 'lightgray' },
+  fg: { char: 'darkblue', branch: 'darkgrey' },
 } as const;
 
 const style = {
-  char: co.of([color.fg.char, color.bg.char]),
-  branch: co.fg(color.fg.branch),
+  char: CO.of([colors.fg.char, colors.bg.char]),
+  branch: CO.fg(colors.fg.branch),
 } as const;
 
 if (arg0 === '-h') {

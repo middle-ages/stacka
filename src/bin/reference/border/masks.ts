@@ -1,5 +1,5 @@
-import { array as AR, function as FN, record as RC } from 'fp-ts';
-import { Border, border, Box, box, color, Mask, BorderName } from 'src/stacka';
+import { function as FN, record as RC } from 'fp-ts';
+import { Border, border, BorderName, Box, box, color, Mask } from 'src/stacka';
 import stringWidth from 'string-width';
 import * as HE from '../../helpers';
 
@@ -34,7 +34,7 @@ if (undefined !== arg && !border.isBorderName(arg)) {
 const targetName = (arg ?? 'thick') as BorderName,
   target = FN.pipe(
     border.sets[targetName],
-    border.setColor(['lime', 'darkest']),
+    border.setColor(['lime', color.grays[20]]),
   );
 
 const widest = Math.max(...RC.keys(border.mask).map(stringWidth));
@@ -47,20 +47,19 @@ const [addRows, addCols]: [MaskMargins, MaskMargins] = [
 ];
 
 const demo = (name: Mask, op: (br: Border) => Border): Box => {
-  const rows = FN.pipe(
-    name === 'openT' ? ['', name] : [name],
-    AR.map(color.of(['white', 'dark'])),
-  );
+  const row = FN.pipe(name, color.of(['white', color.grays[10]]));
   return FN.pipe(
     {
-      rows,
+      row,
       width: widest + (addCols[name] ?? 0),
       height: 1 + (addRows[name] ?? 0),
-      gridBg: 'darker',
+      gridBg: color.grays[10],
+      horizontal: 'center',
+      vertical: name === 'openT' ? 'bottom' : 'middle',
     },
-    box.centered,
+    box,
     FN.pipe(target, op, border),
-    border.withFg('dotted', 'dark'),
+    border.withFg('dotted', color.grays[20]),
   );
 };
 

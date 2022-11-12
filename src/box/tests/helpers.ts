@@ -1,11 +1,12 @@
-import { box, Box } from 'src/box';
-import { grid } from 'src/grid';
+import { Box } from '../types';
+import * as GR from 'src/grid';
 import { Unary } from 'util/function';
 import { assert, test } from 'vitest';
+import * as PA from '../paint';
 
-export const paint: Unary<Box, string[]> = box.asStringsWith('.');
+export const paint: Unary<Box, string[]> = PA.asStringsWith('.');
 
-export const showGrid = grid.asStringsWith('.');
+export const showGrid = GR.paintWith('.');
 
 export const testPaint = (name: string, iut: Box, expect: string[]) => {
   const actual = paint(iut);

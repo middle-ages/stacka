@@ -1,6 +1,7 @@
+import { bold, magenta } from 'ansis/colors';
 import { array as AR } from 'fp-ts';
 import { flow, pipe } from 'fp-ts/lib/function';
-import { border, Box, box } from 'src/stacka';
+import { border, Box, box, color } from 'src/stacka';
 
 const cellWidth = 5;
 
@@ -16,21 +17,22 @@ const innerCell = (addWidth = 0, addHeight = 0) =>
     box.width.set(cellWidth + addWidth),
     box.addHeight(addHeight),
     box.center,
+    box.colorBg(color.grays[5]),
   );
 
 const table: (boxes: Box[][]) => Box = flow(
   AR.map(box.catSnugRightOf),
-  pipe('combineUnder', box.blend.set, AR.map),
+  AR.map(box.blendScreen),
   box.catSnugBelow,
-  box.blend.set('combineUnder'),
+  box.blend.set('multiply'),
 );
 
 const smallTable: Box = pipe(
   [
-    ['1', '2'],
-    ['3', '4'],
+    [`1`, `2`],
+    [`3`, `4`],
   ],
-  pipe(flow(innerCell(), border.line), AR.map, AR.map),
+  pipe(flow(bold, magenta, innerCell(), border.line), AR.map, AR.map),
   table,
 );
 
@@ -43,7 +45,9 @@ const outerCell = (colIdx: number, rowIdx: number) => (s: string) =>
     innerCell(colIdx === 1 ? spanWidth : 0, rowIdx === 1 ? spanHeight : 0),
     border.withFg(
       colIdx === 2 ? 'line' : rowIdx === 2 ? 'thick' : 'hThick',
-      rowIdx ? (colIdx ? 'light' : 'magenta') : 'cyan',
+      color.semiTransparent(
+        rowIdx ? (colIdx ? 'lightgray' : 'magenta') : 'cyan',
+      ),
     ),
   );
 

@@ -1,4 +1,3 @@
-import { bold } from 'ansis/colors';
 import {
   array as AR,
   function as FN,
@@ -7,6 +6,7 @@ import {
   tuple as TU,
 } from 'fp-ts';
 import { join } from 'fp-ts-std/Array';
+import { curry2 } from 'fp-ts-std/Function';
 import { lines } from 'fp-ts-std/String';
 import { dup, mapBoth, withSnd } from 'fp-ts-std/Tuple';
 import { Endomorphism as Endo } from 'fp-ts/lib/Endomorphism';
@@ -14,13 +14,12 @@ import {
   Backdrop,
   backdrop as bd,
   bitmap,
+  BlendMode,
   border as br,
   Box,
   box,
-  Color,
   color,
   grid,
-  hex,
   size,
 } from 'src/stacka';
 import stringWidth from 'string-width';
@@ -31,46 +30,54 @@ import * as HE from '../helpers';
  * examples
  */
 
+const { semiGray, semiWhite, lightCrimson, darkCrimson, darkGray } = HE.colors;
+
 const bricksExample = FN.pipe(
   [bitmap.tee.bottom, bitmap.tee.top],
   dup<[string, string]>,
   TU.mapSnd(TU.swap),
   mapBoth(join('')),
-  FN.pipe(['white', hex('#8a350088')], color.of, AR.map),
-  grid.parseRows,
+  AR.map(color.of(['white', 0x89_00_35_8a])),
+  curry2(grid.parseRows)('center'),
   bd.repeat,
 );
 
 const moonPhase: Backdrop = FN.pipe(
-  '🌘🌘🌗🌖🌕🌔🌓🌒🌑',
-  grid.parseRow,
-  bd.repeat,
+  AR.replicate(7, '🌘🌘🌗🌖🌕🌔🌓🌒🌑'),
+  FN.pipe('center', curry2(grid.parseRows)),
+  bd.center,
 );
 
-const transparent = color.setOpacityLevel('transparent');
-
 const colors = {
-  evenOdd: FN.pipe(
-    ['lighterGrey', 'white'] as [Color, Color],
-    mapBoth(transparent),
-  ),
+  evenOdd: [darkGray, semiWhite],
   altCells: FN.pipe(
-    ['white', 'lighter', 'light', 'lighterGrey', 'darkGrey'],
-    AR.map(transparent),
+    [
+      semiWhite,
+      HE.grays[88],
+      HE.grays[82],
+      HE.grays[74],
+      HE.grays[60],
+      HE.grays[75],
+      HE.grays[90],
+    ],
+    AR.map(HE.glass),
   ),
-  rainbow: FN.pipe(color.rainbow8, AR.map(transparent)),
-};
+  rainbow: FN.pipe(
+    color.rainbow8,
+    AR.map(FN.flow(color.desaturate(0.25), color.lighten(0.1), HE.glass)),
+  ),
+} as const;
 
 const backdrops = {
   empty: bd.empty,
   visible: bd.visible,
-  coloredChar: FN.pipe('⁺', bd.coloredChar('red')),
-  solidFg: bd.solidFg('orange'),
-  solidBg: bd.solidBg('yellow'),
+  coloredChar: FN.pipe('⁺', bd.coloredChar(lightCrimson)),
+  solidFg: bd.solidBg(HE.grays[75]),
+  solidBg: bd.solidBg(HE.grays[25]),
   grid: bd.grid,
   charGrid: bd.charGrid,
-  evenOddRows: bd.evenOddRows(colors.evenOdd),
-  evenOddColumns: bd.evenOddColumns(colors.evenOdd),
+  evenOddRows: bd.evenOddRows([...colors.evenOdd]),
+  evenOddColumns: bd.evenOddColumns([...colors.evenOdd]),
   altRows: bd.altRows(colors.rainbow),
   altColumns: bd.altColumns(colors.rainbow),
   altCells: bd.altCells(colors.altCells),
@@ -79,7 +86,7 @@ const backdrops = {
   checkersMxN: bd.checkersMxN([4, 2]),
   cmykQuadrants: bd.cmykQuadrants,
   'custom🧱bricks': bricksExample,
-  ' custom\n moon phase': moonPhase,
+  'custom\nmoon  box': moonPhase,
 } as const;
 
 type Name = keyof typeof backdrops;
@@ -87,16 +94,30 @@ type Name = keyof typeof backdrops;
 const names = Object.keys(backdrops) as Name[];
 
 const labelStyle: Partial<Record<Name, Endo<string>>> = {
-  solidFg: color.of(['black', 'orange']),
-  solidBg: color.of(['black', 'yellow']),
-  altCells: color('black'),
-  checkersMxN: color.of(['darkBlue', 'grey']),
-  checkers1x1: FN.flow(bold, color.of(['darkBlue', 'grey'])),
+  coloredChar: color.fg('white'),
+  solidFg: color.fg('black'),
+  grid: color.fg('black'),
+  charGrid: color.fg('black'),
+
+  altCells: color.fg('black'),
+  checkers1x1: color.of([darkCrimson, semiGray]),
+  checkersMxN: color.bg('gray'),
+
   ...(FN.pipe(
-    ['evenOddRows', 'evenOddColumns', 'altColumns', 'altRows', 'cmykQuadrants'],
-    AR.map(withSnd(color('darkBlue'))),
+    ['evenOddRows', 'evenOddColumns', 'altRows', 'altColumns'],
+    AR.map(withSnd(color.of(['black', semiWhite]))),
     Object.fromEntries,
   ) as Partial<Record<Name, Endo<string>>>),
+
+  cmykQuadrants: color.fg('black'),
+};
+
+const blends: Partial<Record<Name, BlendMode>> = {
+  checkersMxN: 'multiply',
+  altRows: 'darken',
+  altColumns: 'darken',
+  evenOddRows: 'multiply',
+  evenOddColumns: 'darken',
 };
 
 const reportSize = FN.pipe(
@@ -107,11 +128,12 @@ const reportSize = FN.pipe(
 
 const report = (name: Name, backdrop: Backdrop): Box => {
   const style = labelStyle[name];
+
   return box.centered({
     text: FN.pipe(name, style === undefined ? FN.identity : style),
     size: reportSize,
-    apply: br.withFg('roundDotted', 'dark'),
-    blend: 'normal',
+    apply: br.withFg('roundDotted', HE.grays[20]),
+    blend: blends[name] ?? 'screen',
     backdrop,
   });
 };
@@ -119,6 +141,6 @@ const report = (name: Name, backdrop: Backdrop): Box => {
 FN.pipe(
   FN.pipe(backdrops, RC.mapWithIndex(report), Object.entries) as [Name, Box][],
   AR.map(TU.snd),
-  HE.gallery('Built-in & Custom Backdrops'),
+  HE.colorGallery([1, 0])('Built-in & Custom Backdrops'),
   box.print,
 );

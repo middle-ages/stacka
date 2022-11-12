@@ -1,16 +1,18 @@
-import { function as FN } from 'fp-ts';
+import { function as FN, readonlyArray as RA } from 'fp-ts';
 import { fork } from 'fp-ts-std/Function';
 import * as LE from 'monocle-ts/lib/Lens';
 import * as AL from 'src/align';
 import { Align } from 'src/align';
-import { Backdrop, backdrop as BD } from 'src/backdrop';
+import * as BD from 'src/backdrop';
+import { Backdrop } from 'src/backdrop';
+import * as CO from 'src/color';
 import { Color } from 'src/color';
 import * as GE from 'src/geometry';
-import { grid as GR } from 'src/grid';
+import * as GR from 'src/grid';
+import { Grid } from 'src/grid';
 import { callWith, Endo, Unary } from 'util/function';
 import { ModLens, modLens } from 'util/lens';
-import { mapValues } from 'util/object';
-import { tuple4Map } from 'util/tuple';
+import { appendTuple, Pair, TupleN } from 'util/tuple';
 import { rect, rectLenses as rectLensesOf } from './rect';
 import { Block } from './types';
 
@@ -46,87 +48,89 @@ export type LensKey = keyof Lenses;
 
 export const { grid, blend, hAlign, vAlign, image, project } = lenses;
 
-export const measureGrid: Unary<Block, GE.Size> = FN.flow(grid.get, GR.measure),
+export const measureGrid: Unary<Block, GE.Size> = FN.flow(grid.get, GR.size),
   resetSize: Endo<Block> = callWith(FN.flow(measureGrid, rectLenses.size.set));
 
+export const blends = FN.pipe(
+  ['normal', 'screen', 'over', 'under', 'combineOver', 'combineUnder'] as const,
+  RA.map(lenses.blend.set),
+) as TupleN<Endo<Block>, 6>;
+
+const alignGridMod: Endo<Block> = b => {
+  const {
+    align,
+    rect: { size },
+  } = b;
+  return grid.mod(GR.alignGrid(align, size))(b);
+};
+
+export const mods: TupleN<Endo<Block>, 12> = [
+  alignGridMod,
+  grid.mod(GR.clearFg),
+  grid.mod(GR.clearBg),
+  grid.mod(GR.clearDeco),
+  grid.mod(GR.clearColor),
+  grid.mod(GR.flip),
+  backdrop.mod(BD.clearFg),
+  backdrop.mod(BD.clearBg),
+  backdrop.mod(BD.clearDeco),
+  backdrop.mod(BD.clearColor),
+  backdrop.mod(BD.flip),
+  (b: Block) => grid.mod(GR.alignGrid(align.get(b), rectLenses.size.get(b)))(b),
+];
+
+export const endomorphisms = appendTuple(mods)(blends);
+
 export const [
-    unsetFg,
-    unsetBg,
-    unsetColor,
-    unsetGridFg,
-    unsetGridBg,
-    unsetGridColor,
-  ] = [
-    grid.mod(GR.unsetFg),
-    grid.mod(GR.unsetBg),
-    grid.mod(GR.unsetColor),
-    backdrop.mod(BD.unsetGridFg),
-    backdrop.mod(BD.unsetGridBg),
-    backdrop.mod(BD.unsetGridColor),
-  ],
-  [blendNormal, blendScreen, blendOver, blendUnder] = FN.pipe(
-    ['normal', 'screen', 'over', 'under'],
-    tuple4Map(lenses.blend.set),
-  ),
-  [setFg, setBg, setGridFg, setGridBg, setSolidFg, setSolidBg] = [
-    FN.flow(GR.setFg, grid.mod),
-    FN.flow(GR.setBg, grid.mod),
-    FN.flow(BD.setGridFg, backdrop.mod),
-    FN.flow(BD.setGridBg, backdrop.mod),
-    FN.flow(BD.solidFg, backdrop.set),
-    FN.flow(BD.solidBg, backdrop.set),
-  ],
-  [setColor, setGridColor] = [
-    FN.flow(GR.setColor, grid.mod),
-    FN.flow(BD.setGridColor, backdrop.mod),
-  ],
-  [setFgOpacity, setBgOpacity] = [
-    FN.flow(GR.setFgOpacity, grid.mod),
-    FN.flow(GR.setBgOpacity, grid.mod),
-  ],
-  [setStyle, setGridStyle] = [
-    FN.flow(GR.setStyle, grid.mod),
-    FN.flow(BD.setGridStyle, backdrop.mod),
-  ];
-
-// setters to delegate with 0 args
-const zeroDelegates = {
-  unsetFg,
-  unsetBg,
-
-  unsetColor,
-  unsetGridFg,
-  unsetGridBg,
-
-  unsetGridColor,
-
+  alignGrid,
+  clearFg,
+  clearBg,
+  clearDeco,
+  clearColor,
+  flipColor,
+  clearGridFg,
+  clearGridBg,
+  clearGridDeco,
+  clearGridColor,
+  flipGridColor,
+  layoutGrid,
   blendNormal,
   blendScreen,
   blendOver,
   blendUnder,
-} as const;
+  combineOver,
+  combineUnder,
+] = endomorphisms;
 
-// 1 arg color setters to delegate
-const colorDelegates = {
-  setFg,
-  setBg,
+const withAlign =
+  (f: Unary<Color, Endo<Grid>>): Unary<Color, Endo<Block>> =>
+  c =>
+  b =>
+    FN.pipe(
+      b,
+      FN.pipe(FN.flow(GR.alignGrid(b.align, b.rect.size), f(c)), grid.mod),
+    );
 
-  setGridFg,
-  setGridBg,
+export const colorSetters = [
+    FN.flow(GR.setFg, grid.mod),
+    FN.flow(GR.setBg, grid.mod),
+    withAlign(GR.addBg),
+    withAlign(GR.colorBg),
+    FN.flow(BD.setFg, backdrop.mod),
+    FN.flow(BD.setBg, backdrop.mod),
+  ],
+  [setFg, setBg, addBg, colorBg, setGridFg, setGridBg] = colorSetters;
 
-  setSolidFg,
-  setSolidBg,
-} as const;
+export const [setStyle, setGridStyle] = [
+  FN.flow(GR.setStyle, grid.mod),
+  FN.flow(BD.setStyle, backdrop.mod),
+];
 
-export const delegateZero = <T>(
-  lens: ModLens<T, Block>,
-): Record<keyof typeof zeroDelegates, Endo<T>> =>
-  FN.pipe(zeroDelegates, mapValues(lens.mod));
+export const [modFg, modBg]: Pair<Unary<Endo<Color>, Endo<Block>>> = [
+  FN.flow(GR.modFg, grid.mod),
+  FN.flow(GR.modBg, grid.mod),
+];
 
-export const delegateColor = <T>(
-  lens: ModLens<T, Block>,
-): Record<keyof typeof colorDelegates, Unary<Color, Endo<T>>> =>
-  FN.pipe(
-    colorDelegates,
-    mapValues(f => FN.flow(f, lens.mod)),
-  );
+export const [fg, bg] = [CO.delegateMods(modFg), CO.delegateMods(modBg)];
+
+export const imageSize = FN.flow(image.get, GR.size);

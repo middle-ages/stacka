@@ -8,7 +8,7 @@ import { BinaryC, Unary } from 'util/function';
  * drawn behind all box content.
  *
  * It is modeled after the desktop wallpaper configurator, where you first
- * select an image of one size, and then how it will be shown on a screeen of
+ * select an image of one size, and then how it will be shown on a screen of
  * unknown dimensions.
  *
  * How to customize box background:

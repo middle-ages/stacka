@@ -1,6 +1,5 @@
-//import { termSize, bitmap, BitmapRole } from 'src/stacka';
-import { termSize } from 'src/term';
-import { BitmapRole, bitmap } from 'src/bitmap';
+import { termSize, bitmap, BitmapRole } from 'src/stacka';
+
 /**
  * With no arguments, shows all character bitmaps in every box drawing character
  * role.

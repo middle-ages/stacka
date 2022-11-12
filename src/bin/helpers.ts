@@ -1,64 +1,60 @@
-import { function as FN, option as OP } from 'fp-ts';
+import { function as FN } from 'fp-ts';
 import { toSnd } from 'fp-ts-std/Tuple';
-import { border, box, Box, boxes, color, MaybeColor } from 'src/stacka';
+import { border, box, Box, boxes, Cat, color } from 'src/stacka';
 
-export const addDarkBorder = border.withFg('dotted', 'dark');
+export const glass = color.semiOpaque,
+  lighten = FN.flow(color.lighten(0.4), glass),
+  lightenMost = FN.flow(color.lighten(0.47), glass),
+  darken = FN.flow(color.darken(0.25), glass),
+  darkenMore = FN.flow(color.darken(0.3), glass),
+  darkenMost = FN.flow(color.darken(0.45), glass);
 
-const [outerBorder, outerBorderWidth] = FN.pipe(
-  border.sets.halfSolidNear,
-  border.setColor(['lighterGrey', 'darker']),
-  toSnd(border.width),
-);
+export const colors = {
+  darkestGray: glass(color.grays[5]),
+  darkGray: glass(color.grays[35]),
+  semiGray: glass(color.grays[80]),
+  semiWhite: glass(color.grays[98]),
+  lightOrange: lighten('orange'),
+  darkOrange: darken('orange'),
+  lightCrimson: lighten('crimson'),
+  lightestCrimson: lightenMost('crimson'),
+  crimson: glass('crimson'),
+  darkCrimson: darken('crimson'),
+  darkerCrimson: darkenMore('crimson'),
+  darkestCrimson: darkenMost('crimson'),
+};
 
-const titleBox = (s: string): Box =>
-  box({
-    row: FN.pipe(s, color.of(['darkRed', 'white'])),
-    apply: FN.flow(
-      FN.pipe(
-        border.sets.solid,
-        border.mask.noHEdges,
-        border.setFg('lighter'),
-        border,
-      ),
-      boxes.win.marginsToTerm(outerBorderWidth),
-      box.setSolidBg('light'),
-      box.alignC,
-    ),
+export const grays = color.grays;
+
+const [outerBorder, outerMargins] = FN.pipe(
+    border.sets.vHalfSolid,
+    border.setColor([grays[80], grays[15]]),
+    toSnd(border.width),
+  ),
+  labelBorder = FN.pipe(outerBorder, border.mask.noHEdges);
+
+export const panel = ([hGap, vGap]: [number, number]): Cat =>
+  boxes.win.flow.of({
+    hGap,
+    placeH: box.catRightOfGap(hGap),
+    placeV: box.catBelowGap(vGap),
+    shrink: outerMargins,
   });
-
-export const title: (s: string, bg: MaybeColor) => (b: Box) => Box = (s, bg) =>
-  FN.flow(
-    FN.pipe(s, titleBox, box.belowCenter),
-    box.maybeSolidBg(bg),
-    border(outerBorder),
-  );
-
-const blendSnug =
-  (bg: MaybeColor) => (place: typeof box.catBelowGap, gap: number) =>
-    FN.flow(
-      place(gap),
-      gap === -1 ? box.blendNormal : box.blendOver,
-      box.maybeSolidBg(bg),
-    );
 
 /** Layout given boxes and add a label on top */
 export const colorGallery =
-  (gap: number, bg: MaybeColor) =>
+  (gaps: [number, number]) =>
   (label: string) =>
-  (bs: Box[] | readonly Box[]): Box => {
-    const place = blendSnug(bg);
+  (bs: Box[]): Box => {
+    const body = FN.pipe(bs, panel(gaps));
 
-    return FN.pipe(
-      [...bs],
-      boxes.win.flow.of({
-        hGap: gap,
-        placeH: place(box.catRightOfGap, gap),
-        placeV: place(box.catBelowGap, gap),
-        shrink: outerBorderWidth,
-      }),
-      title(label, bg),
-    );
+    return boxes.labeled.of({
+      border: outerBorder,
+      labelBorder,
+      bg: grays[3],
+      labelBg: grays[92],
+    })(color.of([colors.darkerCrimson, 'white'])(label))(body);
   };
-export const gapGallery = (gap: number) => colorGallery(gap, OP.none),
-  snugGallery = gapGallery(-1),
-  gallery = colorGallery(1, OP.none);
+
+export const snugGallery = colorGallery([-1, -1]),
+  gallery = colorGallery([0, 0]);

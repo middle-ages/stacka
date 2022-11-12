@@ -1,5 +1,4 @@
 import { array as AR, function as FN } from 'fp-ts';
-import { Lazy } from 'fp-ts/lib/function';
 import { head, last } from 'util/array';
 import { Unary } from 'util/function';
 import { Pair } from 'util/tuple';
@@ -18,7 +17,7 @@ type Chain = Edge[];
 
 type ChainMap = Map<string, Chain>;
 
-const chainMap: Lazy<ChainMap> = () => new Map<string, Chain>();
+const chainMap: FN.Lazy<ChainMap> = () => new Map<string, Chain>();
 
 /** Reduce ordered pairs into ordered chains */
 export const extractChains: Unary<Pair<string>[], string[][]> = pairs => {

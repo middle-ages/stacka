@@ -6,20 +6,19 @@ import { Border, border, box, Color, color } from 'src/stacka';
  * direction. Boxes nest, so border nest as well.
  */
 
-const sets = border.sets;
+const [sets, grays] = [border.sets, color.grays];
 
 const borders: [Color, Border][] = [
-  ['white', sets.near],
-  ['white', sets.halfSolidNear],
-  ['lightGrey', sets.halfSolidFar],
-  ['lightGrey', sets.halfSolidNear],
-  ['grey', sets.space],
-  ['darkGrey', sets.halfSolidNear],
-  ['darkerGrey', sets.space],
-  ['darkestGrey', sets.near],
-  ['dark', sets.line],
-  ['darker', sets.space],
-  ['darkest', sets.dotted],
+  [grays[87], sets.halfSolidNear],
+  [grays[80], sets.halfSolidFar],
+  [grays[74], sets.halfSolidNear],
+  [grays[67], sets.space],
+  [grays[55], sets.halfSolidNear],
+  [grays[45], sets.space],
+  [grays[30], sets.near],
+  [grays[20], sets.line],
+  [grays[10], sets.space],
+  [grays[6], sets.dotted],
 ];
 
 // a list of borders to be nested
@@ -39,10 +38,10 @@ const colored: Border[] = FN.pipe(
 
 FN.pipe(
   'borders nest',
-  color.of(['darkBlue', 'white']),
+  color.fg('darkblue'),
   box.of,
-  box.margin(1),
-  box.setSolidBg('white'),
+  box.colorBg('white'),
+  border.colored('near', [grays[97], grays[92]]),
   border.nest(colored),
   box.print,
 );

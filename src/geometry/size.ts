@@ -8,13 +8,13 @@ import {
   predicate as PRE,
   show as SH,
 } from 'fp-ts';
-import * as fc from 'fast-check';
 import { curry2, fork } from 'fp-ts-std/Function';
 import { add as plus, subtract } from 'fp-ts-std/Number';
 import { dup, mapBoth, withFst, withSnd } from 'fp-ts-std/Tuple';
+import * as LE from 'monocle-ts/lib/Lens';
 import { maxPositiveMonoid } from 'util/fp-ts';
 import { Binary, BinOp, BinOpC, BinOpT, Endo, Unary } from 'util/function';
-import { modLens, propLens } from 'util/lens';
+import { modLens } from 'util/lens';
 import { objectMono, typedValues } from 'util/object';
 import { Pair, pairFlow } from 'util/tuple';
 
@@ -36,12 +36,14 @@ export const build: Binary<number, number, Size> = (width, height) => ({
 //#endregion
 
 //#region query
-const lens = FN.flow(propLens<Size>(), modLens);
+const lens = (k: SizeKey) => FN.pipe(LE.id<Size>(), LE.prop(k), modLens);
 
 export const pair: Unary<Size, Pair<number>> = typedValues,
   width = lens('width'),
   height = lens('height'),
   area: Unary<Size, number> = ({ width, height }) => width * height,
+  hasArea: PRE.Predicate<Size> = ({ width, height }) =>
+    width !== 0 || height !== 0,
   isEmpty: PRE.Predicate<Size> = ({ width, height }) =>
     width === 0 && height === 0;
 //#endregion
@@ -75,11 +77,14 @@ export const [addWidth, addHeight] = [
   scaleV: Unary<number, Endo<Size>> =
     n =>
     ({ width, height }) => ({ width, height: height * n }),
-  scale: Unary<number, Endo<Size>> = FN.flow(fork([scaleH, scaleV]), pairFlow);
+  scale: Unary<number, Endo<Size>> = FN.flow(fork([scaleH, scaleV]), pairFlow),
+  abs: Endo<Size> = ({ width, height }) => ({
+    width: Math.abs(width),
+    height: Math.abs(height),
+  });
 //#endregion
 
 //#region instances
-const maxSizeNat = fc.nat(100);
 
 export const getMonoid: Unary<MO.Monoid<number>, MO.Monoid<Size>> = (
     monoid: MO.Monoid<number>,
@@ -96,11 +101,7 @@ export const getMonoid: Unary<MO.Monoid<number>, MO.Monoid<Size>> = (
     equals: (fst, snd) =>
       ord.width.equals(fst, snd) && ord.height.equals(fst, snd),
   },
-  show: SH.Show<Size> = { show: ({ width, height }) => `↔${width}:↕${height}` },
-  arb: fc.Arbitrary<Size> = fc.record({
-    width: maxSizeNat,
-    height: maxSizeNat,
-  });
+  show: SH.Show<Size> = { show: ({ width, height }) => `↔${width}:↕${height}` };
 //#endregion
 
 //#region operations

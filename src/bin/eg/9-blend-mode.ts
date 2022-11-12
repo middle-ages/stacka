@@ -3,7 +3,16 @@ import { array as AR } from 'fp-ts';
 import { prepend } from 'fp-ts-std/String';
 import { mapBoth } from 'fp-ts-std/Tuple';
 import { flow, identity, pipe } from 'fp-ts/lib/function';
-import { align, BlendMode, border, Box, box, boxes, color } from 'src/stacka';
+import {
+  align,
+  BlendMode,
+  border,
+  Box,
+  box,
+  Color,
+  boxes,
+  color,
+} from 'src/stacka';
 
 type Pair<A> = [A, A];
 
@@ -11,7 +20,7 @@ type ModPair = (bs: Pair<Box>) => Pair<Box>;
 
 type MixConfig = { glyph: boolean; style: boolean };
 
-const [aboveColor, belowColor] = [color.hex('#a00f'), color.hex('#0c0f')];
+const [aboveColor, belowColor]: Pair<Color> = ['magenta', 'cyan'];
 
 const bool = (f: boolean): string => (f ? '✅' : '❌') + ' ';
 
@@ -55,7 +64,7 @@ const blenders =
           thick = pipe(border.sets.thick, border.setFg(borderColor), border);
 
         return box({
-          row: pipe(row, pipe(color.hex(isBelow ? '#6b6' : '#b66'), color)),
+          row: pipe(row, pipe(isBelow ? 'cyan' : 'magenta', color.fg)),
           align: isBelow ? align.bottomRight : align.topLeft,
           apply: flow(box.addHeight(1), box.addWidth(4), thick),
         });
@@ -81,7 +90,7 @@ const mixHeaders = pipe(
     pipe(
       [bool(glyph) + 'glyphs combined', bool(style) + 'styles mixed'],
       box.fromRows,
-      box.height.set(10),
+      box.height.set(7),
       box.alignM,
     ),
   ),
@@ -90,15 +99,15 @@ const mixHeaders = pipe(
 
 const rows = pipe(mixBlends, AR.map(blenders(identity)), box.catBelow);
 
-const table = pipe(rows, pipe(mixHeaders, box.rightOfGap(2)));
+const table = pipe(rows, pipe(mixHeaders, box.alignRightOfGap('top')(3)));
 
 const title = pipe(
   ': Blend Modes, Opacity, and ZOrder',
-  color('lightGrey'),
-  prepend('Controling Composition'),
-  color.of(['light', 'darker']),
+  color.fg(color.grays[80]),
+  prepend('Controlling Color'),
+  color.of([color.grays[95], color.grays[20]]),
   box.of,
-  pipe(border.sets.near, border.setFg('darkest'), border),
+  pipe(border.sets.near, border.setFg(color.grays[10]), border),
 );
 
-pipe(title, pipe(table, box.aboveCenterGap(1)), box.print);
+pipe(title, pipe(table, box.aboveCenterGap(0)), box.print);

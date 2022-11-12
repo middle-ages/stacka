@@ -1,9 +1,4 @@
-import {
-  array as AR,
-  function as FN,
-  option as OP,
-  readonlyArray as RA,
-} from 'fp-ts';
+import { array as AR, function as FN } from 'fp-ts';
 import {
   BlendMode,
   box,
@@ -11,8 +6,7 @@ import {
   boxes,
   color,
   Color,
-  hex,
-  OpacityLevel,
+  Level,
   pos,
   Pos,
   size,
@@ -24,31 +18,27 @@ type BlendColors = Record<'over' | 'under' | 'middle', Color>;
 const colors = {
   blend: [
     {
-      over: hex('#0ff'),
-      middle: hex('#cc0'),
-      under: hex('#909'),
+      over: 0x1f_00_ff_ff,
+      middle: 0x90_c0_c0_00,
+      under: 0xe0_90_00_90,
     },
     {
-      over: hex('#f00'),
-      middle: hex('#0f0'),
-      under: hex('#00f'),
+      over: 0x1f_ff_00_00,
+      middle: 0x90_00_ff_00,
+      under: 0xe0_00_00_ff,
     },
   ],
-  borderFg: 'darkGrey',
-  innerBg: hex('#f8f8f8ff'),
-  outerBg: hex('#d8d8d801'),
-  labelFg: 'black',
 } as const;
 
-const blendBox = ([lvl, c, pos]: [OpacityLevel, Color, Pos]) =>
+const blendBox = ([lvl, c, pos]: [Level, Color, Pos]) =>
   box({
     size: size.square(3),
-    gridFg: FN.pipe(c, color.setOpacityLevel(lvl)),
+    gridFg: FN.pipe(c, FN.pipe(lvl, color.levelAt, color.opacity.set)),
     pos,
   });
 
 const opacityReport =
-  (colors: BlendColors) => (blend: BlendMode) => (lvl: OpacityLevel) =>
+  (colors: BlendColors) => (blend: BlendMode) => (lvl: Level) =>
     FN.pipe(
       [
         [lvl, colors.over, pos(2, 1)],
@@ -61,9 +51,10 @@ const opacityReport =
     );
 
 const opacityLevels = FN.pipe(
-  color.opacityLevelNames,
+  color.levelNames,
   AR.filter(s => s !== 'transparent'),
 );
+
 const blendReport =
   (blendColors: BlendColors) =>
   (blend: BlendMode): Box => {
@@ -73,27 +64,31 @@ const blendReport =
       opacityLevels,
       AR.map(report),
       box.catLeftOfGap(1),
-      box.setSolidBg('white'),
-      FN.pipe(blend, color(colors.labelFg), boxes.labeled),
+      box.colorBg('white'),
+      FN.pipe(blend, color.fg('lightgray'), boxes.labeled),
     );
   };
 
-const blendReports = (blendColors: BlendColors): Box[] =>
+const blendReports = (blendColors: BlendColors) =>
   FN.pipe(
-    color.modes,
-    AR.filter(mode => !mode.startsWith('combine')),
+    [...color.blendModes],
+    AR.filter(
+      mode => !mode.startsWith('combine') && !mode.startsWith('default'),
+    ),
     FN.pipe(blendColors, blendReport, AR.map),
   );
 
 const report = FN.pipe(
-  colors.blend,
-  RA.chain(blendReports),
+  [...colors.blend],
+  AR.chain(blendReports),
   FN.pipe(
     'Blend Modes: 2 Color Sets ˣ Opacity Levels: ' +
-      FN.pipe(opacityLevels, AR.reverse, AR.map(color.opacityLevelAt)).join(
-        ', ',
-      ),
-    colorGallery(-1, OP.some(colors.outerBg)),
+      FN.pipe(
+        opacityLevels,
+        AR.reverse,
+        AR.map(l => (color.levelAt(l) / 255).toFixed(1)),
+      ).join(', '),
+    colorGallery([2, 1]),
   ),
 );
 

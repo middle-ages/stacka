@@ -1,12 +1,8 @@
 import assert from 'assert';
-import {
-  array as AR,
-  function as FN,
-  reader as RE,
-  readonlyArray as RA,
-} from 'fp-ts';
+import { array as AR, function as FN, reader as RE } from 'fp-ts';
 import { box, Box, BoxSet, Cat } from 'src/box';
-import { BlendMode, color } from 'src/color';
+import * as color from 'src/color';
+import { BlendMode } from 'src/color';
 import { BinaryC, Endo, Unary } from 'util/function';
 import { pluck } from 'util/object';
 import { delay, final, tco, Tco } from 'util/tco';
@@ -126,7 +122,7 @@ const of: Unary<MinFlowConfig, Cat> = partial => boxes => {
   return FN.pipe(
     boxes as Box[],
     run(config),
-    RA.map(FN.flow(config.placeH, setBlend)),
+    AR.map(FN.flow(config.placeH, setBlend)),
     config.placeV,
     setBlend,
   );

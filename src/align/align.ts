@@ -1,7 +1,8 @@
 import { predicate as PRE } from 'fp-ts';
 import { dup, toSnd } from 'fp-ts-std/Tuple';
 import { dir } from 'src/geometry';
-import { Unary } from 'util/function';
+import { Binary, Unary } from 'util/function';
+import { halfInt } from 'util/number';
 import { Pair } from 'util/tuple';
 import { exportInstances as IN } from './instances';
 import { hLens, vLens } from './lens';
@@ -12,11 +13,17 @@ import {
   HAlign,
   hAlign,
   HAlignPair,
+  hvAlign,
+  mapHAlign,
+  mapVAlign,
+  matchHAlign,
+  matchVAlign,
   OrientAlign,
   OrientPair,
   VAlign,
   vAlign,
   VAlignPair,
+  vhAlign,
 } from './types';
 
 export * from './types';
@@ -82,20 +89,35 @@ const isEdgePair: PRE.Predicate<OrientPair> = ([fst, snd]) =>
     ? fst !== 'center' && snd !== 'center'
     : fst !== 'middle' && snd !== 'middle';
 
+const horizontally: Binary<HAlign, number, Pair<number>> = (hAlign, w) =>
+    matchHAlign<Pair<number>>([0, w], halfInt(w), [w, 0])(hAlign),
+  vertically: Binary<VAlign, number, Pair<number>> = (vAlign, h) =>
+    matchVAlign<Pair<number>>([0, h], halfInt(h), [h, 0])(vAlign);
+
 export const align = {
   hLens,
   vLens,
   ...IN,
   ...alignments,
 
-  isHorizontal,
-  isVertical,
+  dupAlign,
+  hAlign,
+  horizontally,
+  hvAlign,
+  isEdgePair,
   isHVPair,
+  isHorizontal,
+  isOrientHead,
   isVHPair,
+  isVertical,
+  mapHAlign,
+  mapVAlign,
+  matchHAlign,
+  matchVAlign,
+  orientPair,
   reversedHorizontal,
   reversedVertical,
-  isOrientHead,
-  isEdgePair,
-  dupAlign,
-  orientPair,
+  vAlign,
+  vertically,
+  vhAlign,
 } as const;

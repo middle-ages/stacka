@@ -10,9 +10,9 @@ export const tryCombine: Unary<Pair<string>, OP.Option<string>> = pair =>
     : OP.none;
 
 export const combine = ([below, above]: Pair<string>) =>
-  below === ' '
+  below === ' ' || below === ''
     ? above
-    : above === ' '
+    : above === ' ' || above === ''
     ? below
     : FN.pipe(
         FN.pipe([below, above], tryCombine),

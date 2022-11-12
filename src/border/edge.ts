@@ -6,7 +6,7 @@ import {
   tuple as TU,
 } from 'fp-ts';
 import { fork } from 'fp-ts-std/Function';
-import { mapBoth, toSnd, withSnd } from 'fp-ts-std/Tuple';
+import { dup, mapBoth, toSnd, withSnd } from 'fp-ts-std/Tuple';
 import { box, Box } from 'src/box';
 import * as GE from 'src/geometry';
 import {
@@ -19,7 +19,7 @@ import {
   VDir,
 } from 'src/geometry';
 import { BinaryC, BinOpT, Endo, Unary } from 'util/function';
-import { copyFromWith, ModLens, modLens } from 'util/lens';
+import { copyFromLensWith, ModLens, modLens } from 'util/lens';
 import { max } from 'util/number';
 import { typedFromEntries } from 'util/object';
 import { Pair, pairFlow } from 'util/tuple';
@@ -119,7 +119,8 @@ export const setOrientEdges: BinaryC<Orientation, EdgeParts, Endo<Border>> =
 
 export const copyEdge: Unary<Dir, BinOpT<Border>> = FN.flow(
   edgeAt,
-  copyFromWith<BorderEdge>(FN.identity),
+  dup,
+  copyFromLensWith<BorderEdge>(FN.identity),
 );
 
 const copyEdgePair: Unary<Pair<Dir>, BinOpT<Border>> =

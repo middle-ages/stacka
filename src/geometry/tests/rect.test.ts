@@ -3,6 +3,7 @@ import { function as FN } from 'fp-ts';
 import { pos, rect } from 'src/geometry';
 import { assert, suite, test } from 'vitest';
 import { mapBoth } from 'fp-ts-std/Tuple';
+import { rectArb } from './helpers';
 
 /**
  *  ```txt
@@ -157,7 +158,7 @@ suite('rect', () => {
   });
 
   suite('laws', () => {
-    test('eq', () => laws.eq(rect.eq, rect.arb));
-    test('monoid', () => laws.monoid(rect.monoid, rect.eq, rect.arb));
+    test('eq', () => laws.eq(rect.eq, rectArb));
+    test('monoid', () => laws.monoid(rect.monoid, rect.eq, rectArb));
   });
 });

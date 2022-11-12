@@ -2,7 +2,8 @@ import assert from 'assert';
 import { array as AR, function as FN, tuple as TU } from 'fp-ts';
 import { bitmap } from 'src/bitmap';
 import { Box, box } from 'src/box';
-import { color as co, Color } from 'src/color';
+import { Color } from 'src/color';
+import * as CO from 'src/color';
 import { glyph } from 'src/glyph';
 import { head } from 'util/array';
 import { BinaryC, Endo, Unary } from 'util/function';
@@ -12,17 +13,22 @@ import { mapBoth } from 'fp-ts-std/Tuple';
 const groupIndentWidth = 3;
 
 const color = {
-  bg: { char: 'white', inner: 'light', group: 'dark' },
-  fg: { char: 'darkBlue', inner: 'darkGrey' },
+  bg: {
+    char: CO.grays[95],
+    inner: CO.grays[80],
+    group: CO.grays[20],
+    sep: CO.grays[75],
+  },
+  fg: { char: 'darkblue', inner: 'gray' },
 } as const;
 
-const outerBorderPair: Pair<Color> = [color.bg.group, color.bg.inner];
+const outerBorderPair: Pair<Color> = [color.bg.group, color.bg.sep];
 
 const style = {
-  char: co.of([color.fg.char, color.bg.char]),
-  innerBorder: co.of([color.fg.inner, color.bg.inner]),
-  outerBorder: co.of(outerBorderPair),
-  outerInverse: FN.pipe(outerBorderPair, TU.swap, co.of),
+  char: CO.of([color.fg.char, color.bg.char]),
+  innerBorder: CO.of([color.fg.inner, color.bg.inner]),
+  outerBorder: CO.of(outerBorderPair),
+  outerInverse: FN.pipe(outerBorderPair, TU.swap, CO.of),
 } as const;
 
 const bl = bitmap.line,
@@ -59,15 +65,6 @@ const indent: Endo<Box> = b =>
       ),
     ...FN.pipe([deco.chunkUpperBorder, deco.chunkLowerBorder], mapBoth(strut)),
   ];
-
-/*
-const chainInGroupReport: Unary<string[], Box> = FN.flow(
-  AR.map(bitmap.matrixByChar),
-  AR.map(framedQuadRes([style.char, ...dup(co.of(['light', 'light']))])),
-  AR.map(box.fromRows),
-  box.catRightOf,
-);
-*/
 
 const chainInGroupReport: Unary<string[], Box> = FN.flow(
   AR.map(style.char),
@@ -107,7 +104,7 @@ export const relationChainsReport: BinaryC<number, string[][], Box> =
       glyph.chainsBySize,
       AR.map(groupReport),
       box.catBelow,
-      box.setSolidBg(color.bg.group),
+      box.colorBg(color.bg.group),
       indent,
     );
   };

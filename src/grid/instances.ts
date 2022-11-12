@@ -1,54 +1,61 @@
-import * as fc from 'fast-check';
 import {
-  function as FN,
-  monoid as MO,
   array as AR,
   eq as EQ,
+  function as FN,
+  monoid as MO,
   show as SH,
 } from 'fp-ts';
-import { mapBoth } from 'fp-ts-std/Tuple';
-import { size as SZ } from 'src/geometry';
-import { BlendMode } from 'src/color';
-import { Pair } from 'util/tuple';
-import { Unary } from 'util/function';
-import { row } from './row/row';
-import { matchCell } from './cell/types';
-import { Grid } from './types';
-import { measure, empty, stack, mapCells } from './ops';
 import { sum } from 'fp-ts-std/Array';
+import { toSnd } from 'fp-ts-std/Tuple';
+import { align } from 'src/align';
+import { matchCell } from 'src/cell';
+import { BlendMode } from 'src/color';
+import { size as SZ } from 'src/geometry';
+import { Unary } from 'util/function';
+import { Pair } from 'util/tuple';
+import * as ST from './stack';
+import * as TY from './types';
+import { Grid } from './types';
 
-const [k0, k1] = FN.pipe([0, 1], mapBoth(FN.constant));
+export const eq: EQ.Eq<Grid> = {
+  equals: ({ buffer: fst }, { buffer: snd }) => {
+    const [fstLen, sndLen] = [fst.length, snd.length];
 
-export const eq: EQ.Eq<Grid> = AR.getEq(row.eq),
-  show: SH.Show<Grid> = {
-    show: g => {
-      const size = measure(g),
-        area = SZ.area(size),
-        { width, height } = size,
-        someCount = FN.pipe(
-          g,
-          mapCells(matchCell(k0, k1, k1, k1)),
-          AR.map(sum),
-          sum,
-        ),
-        full = area === 0 ? '0' : Math.round((100 * someCount) / area);
+    if (fstLen !== sndLen) return false;
 
-      return `${width}ˣ${height} ${full}%`;
-    },
-  };
+    for (let offset = 0; offset < fstLen; offset++)
+      if (fst[offset] !== snd[offset]) return false;
 
-export const getMonoid: Unary<BlendMode, MO.Monoid<Grid>> = blend => ({
-  empty,
-  concat: FN.pipe(blend, stack, FN.untupled),
+    return true;
+  },
+};
+
+export const show: SH.Show<Grid> = {
+  show: grid => {
+    const [{ width, height }, area] = FN.pipe(grid, TY.size, toSnd(SZ.area));
+    const percent =
+      area === 0
+        ? 0
+        : 100 *
+          (FN.pipe(
+            grid,
+            TY.unpack,
+            AR.map(AR.map(matchCell(0, FN.constant(1), FN.constant(1), 1))),
+            AR.map(sum),
+            sum,
+          ) /
+            area);
+    return `${width}ˣ${height} ${percent.toFixed(0)}% non-empty`;
+  },
+};
+
+export const getMonoid: Unary<BlendMode, MO.Monoid<Grid>> = mode => ({
+  empty: TY.empty(),
+  concat: (lower, upper) =>
+    ST.stackAlign([align.bottomLeft, TY.size(lower)])(mode)([lower, upper]),
 });
 
-export const [monoid, underMonoid]: Pair<MO.Monoid<Grid>> = FN.pipe(
-  ['over', 'under'],
-  mapBoth(getMonoid),
-);
-
-export const getArb: Unary<number, fc.Arbitrary<Grid>> = maxRowWidth =>
-  fc.array(fc.nat(maxRowWidth).chain(row.getNarrowOrNoneArb), {
-    minLength: 1,
-    maxLength: maxRowWidth,
-  });
+export const [underMonoid, overMonoid]: Pair<MO.Monoid<Grid>> = [
+  getMonoid('under'),
+  getMonoid('over'),
+];

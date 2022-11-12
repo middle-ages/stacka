@@ -1,19 +1,20 @@
 import { array as AR, function as FN, option as OP, record as RC } from 'fp-ts';
+import * as LE from 'monocle-ts/Lens';
 import { mapBoth } from 'fp-ts-std/Tuple';
 import { CharRelation, RelationName } from './relation';
 import { BinaryC, Unary } from 'util/function';
-import { lensAt, modLens } from 'util/lens';
+import { modLens } from 'util/lens';
 import { Pair } from 'util/tuple';
 import { glyphByChar } from './registry';
 import { Glyph, MaybeGlyph } from './types';
 import { pluck } from 'util/object';
 
-const lens = lensAt<Glyph>();
+const lens = LE.id<Glyph>();
 
-export const char = FN.pipe(lens('char'), modLens),
-  roles = FN.pipe(lens('roles'), modLens),
-  matrix = FN.pipe(lens('roles'), modLens),
-  relation = FN.pipe(lens('relation'), modLens);
+export const char = FN.pipe(lens, LE.prop('char'), modLens),
+  roles = FN.pipe(lens, LE.prop('roles'), modLens),
+  matrix = FN.pipe(lens, LE.prop('roles'), modLens),
+  relation = FN.pipe(lens, LE.prop('relation'), modLens);
 
 export const getRelation: BinaryC<
   RelationName,

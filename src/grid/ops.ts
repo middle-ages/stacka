@@ -1,107 +1,80 @@
-import { array as AR, function as FN, option as OP, tuple as TU } from 'fp-ts';
-import { unlines } from 'fp-ts-std/String';
-import { BlendMode, Color } from 'src/color';
-import { Size, size } from 'src/geometry';
-import { head } from 'util/array';
-import { BinaryC, BinOpT, Endo, Unary } from 'util/function';
-import { Pair, Tuple3 } from 'util/tuple';
-import { Cell, cell, Styled } from './cell/cell';
-import { row } from './row/row';
-import { style as ST, Style } from './style/style';
+import { function as FN } from 'fp-ts';
+import { Color } from 'src/color';
+import * as CO from 'src/color';
+import * as CE from 'src/cell';
+import { Cell } from 'src/cell';
+import { Size } from 'src/geometry';
+import { Deco, Style } from 'src/style';
+import * as ST from 'src/style';
+import { repeatSubgrid } from 'util/array';
+import { BinaryC, Endo, Unary } from 'util/function';
+import { Pair } from 'util/tuple';
+import * as MO from './mod';
+import * as TY from './types';
 import { Grid } from './types';
 
-export const empty: Grid = [],
-  fillEmpty: Unary<Size, Grid> = ({ width, height }) =>
-    AR.replicate(height, row.emptyN(width));
+export const [clearFg, clearBg, clearDeco, clearColor, flip] = [
+  MO.modCells(CE.clearFg),
+  MO.modCells(CE.clearBg),
+  MO.modCells(CE.clearDeco),
+  MO.modCells(CE.clearColor),
+  MO.modCells(CE.flip),
+];
 
-export const parseRow: Unary<string, Grid> = FN.flow(cell.parseRow, AR.of),
-  parseRows: Unary<string[], Grid> = AR.chain(parseRow);
+export const get: BinaryC<Pair<number>, Grid, Cell> =
+    ([x, y]) =>
+    g =>
+      CE.readCell(g.buffer)(CE.cellWords * (x + y * g.width)),
+  set: BinaryC<Pair<number>, Cell, Unary<Grid, number>> =
+    ([x, y]) =>
+    c =>
+    g =>
+      CE.writeCell(g.buffer)(CE.cellWords * (x + y * g.width), c);
 
-export const stack: Unary<BlendMode, BinOpT<Grid>> =
-  blend =>
-  ([below, above]) =>
-    AR.isEmpty(above)
-      ? below
-      : AR.isEmpty(below)
-      ? above
-      : FN.pipe(below, AR.zip(above), FN.pipe(blend, row.stack, AR.map));
+/** Repeat and crop the grid so that it fills the given size */
+export const repeat: Unary<Size, Endo<Grid>> =
+  ({ width, height }) =>
+  g =>
+    FN.pipe(g, TY.unpack, repeatSubgrid([width, height]), TY.pack);
 
-export const measureAligned: Unary<Grid, Size> = g => {
-  const height = g.length;
-  return height === 0 ? size.empty : size(g[0].length, height);
-};
-
-export const measure: Unary<Grid, Size> = g => {
-  const height = g.length;
-  return height === 0 ? size.empty : size(row.maxRowWidth(g), height);
-};
-
-export const asStringsWith: BinaryC<string, Grid, string[]> = FN.flow(
-    row.asStringWith,
-    AR.map,
-  ),
-  asStrings = asStringsWith(' '),
-  asString: Unary<Grid, String> = FN.flow(asStrings, unlines);
-
-export const mapCells = <R>(f: Unary<Cell, R>): Unary<Grid, R[][]> =>
-  AR.map(AR.map(f));
-
-export const modCells: Unary<Unary<Cell, Cell[]>, Endo<Grid>> = FN.flow(
-  AR.map,
-  AR.chain,
-);
-
-export const modEmpty: Unary<Cell, Endo<Grid>> = c =>
-  modCells(
-    cell.matchCell(
-      () => [c],
-      (_, c) => [c],
-      (_, ...rest) => [TU.snd(rest)],
-      (_, c) => [c],
-    ),
-  );
-
-export const modStyled: Unary<Endo<Styled>, Endo<Grid>> = f =>
-  modCells(ce =>
-    FN.pipe(
-      ce,
-      cell.matchCell(
-        FN.constant(cell.empty as Cell),
-        (_, c) => {
-          const { style, char } = f(c);
-          return FN.pipe(char, cell.fromChar(style), head);
-        },
-        (_, ...rest) => {
-          const { style, char } = FN.pipe(rest, TU.snd, f);
-          return FN.pipe(char, cell.fromChar(style), head);
-        },
-        (_, c) => c,
-      ),
-      ce => (cell.isWide(ce) ? cell.attachCont(ce) : [ce]),
-    ),
-  );
-
-export const modChar: Unary<Endo<string>, Endo<Grid>> = f =>
-    modStyled(({ char, ...rest }) => ({ char: f(char), ...rest })),
-  modStyle: Unary<Endo<Style>, Endo<Grid>> = f =>
-    modStyled(({ style, ...rest }) => ({ style: f(style), ...rest }));
+/** Set the given style on every non-empty cell in the grid */
 
 export const setStyle: Unary<Style, Endo<Grid>> = FN.flow(
     FN.constant,
-    modStyle,
+    MO.modStyle,
   ),
-  setChar: Unary<string, Endo<Grid>> = FN.flow(FN.constant, modChar),
-  setFg: Unary<Color, Endo<Grid>> = FN.flow(OP.some, ST.fg.set, modStyle),
-  setBg: Unary<Color, Endo<Grid>> = FN.flow(OP.some, ST.bg.set, modStyle),
-  [unsetFg, unsetBg, unsetColor]: Tuple3<Endo<Grid>> = [
-    modStyle(ST.unsetFg),
-    modStyle(ST.unsetBg),
-    modStyle(ST.unsetColor),
-  ],
-  [setFgOpacity, setBgOpacity] = [
-    FN.flow(ST.setFgOpacity, modStyle),
-    FN.flow(ST.setBgOpacity, modStyle),
-  ];
+  setRune: Unary<string, Endo<Grid>> = FN.flow(FN.constant, MO.modRune);
 
-export const setColor: Unary<Pair<Color>, Endo<Grid>> = ([fg, bg]) =>
-  FN.flow(setFg(fg), setBg(bg));
+/** Set the background color on every non-empty cell in the grid */
+export const setBg: Unary<Color, Endo<Grid>> = FN.flow(
+    ST.bg.color.set,
+    MO.modStyle,
+  ),
+  /** Set the foreground color on every non-empty cell in the grid */
+  setFg: Unary<Color, Endo<Grid>> = FN.flow(ST.fg.color.set, MO.modStyle),
+  /** Set the ANSI deco on every non-empty cell in the grid */
+  setDeco: Unary<Deco, Endo<Grid>> = FN.flow(ST.setDeco, MO.modStyle),
+  /** Set the foreground+background color every non-empty cell in the grid */
+  setColor: Unary<Pair<Color>, Endo<Grid>> = ([fg, bg]) =>
+    FN.flow(setFg(fg), setBg(bg));
+
+/**
+ * replace all empty cells in the grid with a space character painted with the
+ * given background color
+ */
+export const addBg: Unary<Color, Endo<Grid>> = FN.flow(
+  CE.spaceBg,
+  FN.constant,
+  MO.modNone,
+);
+
+/**
+ * replace all empty cells in the grid with a space character painted with the
+ * given background color, and set it on all non-empty cells as well
+ *
+ */
+export const colorBg: Unary<Color, Endo<Grid>> = color =>
+  FN.flow(addBg(color), setBg(color));
+
+export const fg = CO.delegateMods(MO.modFg),
+  bg = CO.delegateMods(MO.modBg);

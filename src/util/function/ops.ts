@@ -1,8 +1,8 @@
 import { function as FN } from 'fp-ts';
 import { uncurry2 } from 'fp-ts-std/Function';
-import { Binary, BinaryC, Lazy, Unary } from './types';
+import { Binary, BinaryC, Unary } from './types';
 
-export const apply0 = <T>(fn: Lazy<T>): T => fn();
+export const apply0 = <T>(fn: FN.Lazy<T>): T => fn();
 
 export const apply1 =
   <A>(a: A) =>

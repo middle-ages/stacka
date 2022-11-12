@@ -1,8 +1,9 @@
 import { Align, HAlign, VAlign } from 'src/align';
-import { Backdrop, backdrop } from 'src/backdrop';
-import { BlendMode, color, Color } from 'src/color';
+import { Backdrop } from 'src/backdrop';
+import * as BD from 'src/backdrop';
+import { defaultBlendMode, BlendMode, Color } from 'src/color';
 import { Pos, rect, Rect, Size } from 'src/geometry';
-import { Grid } from 'src/grid';
+import { Grid, empty as emptyGrid } from 'src/grid';
 
 export const defaultHAlign: HAlign = 'left',
   defaultVAlign: VAlign = 'bottom',
@@ -22,28 +23,28 @@ export interface Block {
 }
 
 export const empty: Block = {
-  grid: [],
+  grid: emptyGrid(),
   rect: rect.empty,
   align: defaultAlign,
-  blend: color.defaultBlendMode,
-  backdrop: backdrop.empty,
+  blend: defaultBlendMode,
+  backdrop: BD.empty,
 };
 
 /** Block constructor arguments  */
 export interface BlockArgs extends Partial<Block & Rect & Pos & Size> {
-  /** join strings and parse grid from single row */
+  /** Join strings and parse grid from single row */
   words?: string[];
-  /** parse grid from single row*/
+  /** Parse grid from single row*/
   row?: string;
-  /**  parse grid from multiple rows*/
+  /**  Parse grid from multiple rows*/
   rows?: string[];
-  /** break newlines and parse into multiple rows*/
+  /** Break newlines and parse into multiple rows*/
   text?: string;
-  /**  if `gridFg` is set, backdrop is set to “█” in given fg color */
+  /**  If `gridFg` is set, backdrop is set to “█” in given fg color */
   gridFg?: Color;
-  /**  if `gridBg` is set, set backdrop to bg colored space char */
+  /**  When set, every cell, empty or not, has bg set to this color */
   gridBg?: Color;
-  /** optional `backdropImage` is used as the background image behind content */
+  /** Optional `backdropImage` is used as the background image behind content */
   backdropImage?: Grid;
   /** Content horizontal alignment */
   horizontal?: HAlign;

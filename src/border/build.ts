@@ -1,11 +1,13 @@
 import { function as FN, option as OP } from 'fp-ts';
-import { Backdrop, backdrop as BD } from 'src/backdrop';
+import { Backdrop } from 'src/backdrop';
+import * as BD from 'src/backdrop';
 import { box, MaybeBox } from 'src/box';
 import { BorderDir, borderDir } from 'src/geometry';
 import { Unary } from 'util/function';
 import { mapValuesOf } from 'util/object';
 import { BackdropParts, Border, CharParts, CellParts } from './types';
-import { Cell, cell } from 'src/grid';
+import * as cell from 'src/cell';
+import { Cell } from 'src/cell';
 
 const backdropBox: Unary<Backdrop, MaybeBox> = FN.flow(
   box.fromBackdrop,
@@ -25,7 +27,7 @@ export const fromCells: Unary<CellParts, Border> = mapBordered<Cell>()(
 
 /** Create a border that repeats the char given per border direction */
 export const fromNarrowChars: Unary<CharParts, Border> = FN.flow(
-  mapValuesOf<BorderDir, string>()<Cell>(cell.plainNarrow),
+  mapValuesOf<BorderDir, string>()<Cell>(cell.plainChar),
   fromCells,
 );
 

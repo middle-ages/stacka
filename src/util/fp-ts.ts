@@ -6,11 +6,8 @@ import {
   monoid as MO,
   number as NU,
   ord as OD,
-  predicate as PRE,
   readonlyArray as RA,
-  show as SH,
 } from 'fp-ts';
-import { fork } from 'fp-ts-std/Function';
 import { withSnd } from 'fp-ts-std/Tuple';
 import { Kind, URIS } from 'fp-ts/lib/HKT';
 import { Unary } from 'util/function';
@@ -21,6 +18,7 @@ import {
   setPropOf,
   typedEntries,
 } from 'util/object';
+import { ByteArray } from './array';
 
 export type Extract<F extends HKT.URIS, B> = <A>(from: HKT.Kind<F, A>) => B;
 
@@ -61,8 +59,6 @@ export const monoOrdStruct =
   <K extends string>(keys: readonly K[]): OD.Ord<Record<K, V>> =>
     ordStruct(OD.getMonoid<Record<K, V>>())(monoObject(ord)(keys));
 
-export const showFor = <T>(show: Unary<T, string>): SH.Show<T> => ({ show });
-
 export const recordEq =
   <T extends Record<keyof T, T[keyof T]>>(eq: EQ.Eq<T[keyof T]>) =>
   <K extends keyof T>(keys: K[]): EQ.Eq<T> =>
@@ -73,12 +69,17 @@ export const recordEq =
       EQ.struct,
     ) as EQ.Eq<T>;
 
-export const partition = <A>(f: PRE.Predicate<A>): Unary<A[], [A[], A[]]> =>
-  FN.flow(AR.partition(f), fork([x => x.left, x => x.right]));
-
 export const maxPositiveMonoid: MO.Monoid<number> = FN.pipe(
   NU.Bounded,
   MO.max,
   // fp-ts max zero is -∞, but for positives, 0 is correct
   FN.pipe(0, setPropOf<MO.Monoid<number>>()('empty')),
 );
+
+export const byteArrayEq: EQ.Eq<ByteArray> = {
+  equals: (a, b) => {
+    if (a.length !== b.length) return false;
+    for (let i = a.length; -1 < i; i -= 1) if (a[i] !== b[i]) return false;
+    return true;
+  },
+};

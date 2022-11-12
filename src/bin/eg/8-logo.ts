@@ -1,15 +1,25 @@
-import { bold, italic, strike } from 'ansis/colors';
+import { italic, strike } from 'ansis/colors';
+import { flip } from 'fp-ts-std/Function';
 import { flow, pipe } from 'fp-ts/lib/function';
-import { align, backdrop, border, box, boxes, color, size } from 'src/stacka';
+import { align, backdrop, border, Box, box, boxes, color } from 'src/stacka';
+
+const glass = color.semiOpaque,
+  lighten = flow(color.lighten(0.4), glass),
+  darken = flow(color.darken(0.25), glass);
+
+const semiGray = glass(color.grays[70]),
+  magenta = glass('magenta'),
+  [lightMagenta, darkMagenta] = [lighten(magenta), darken(magenta)];
 
 const compositional = pipe(
   pipe('😐📦📝💻🔔⌚', box.of, box.hMargins(2)),
   pipe(
-    'compositional',
+    color.fg(lightMagenta)('compositional'),
     pipe(
       {
-        border: pipe(border.sets.thick, border.setFg('pink')),
-        labelBorder: pipe(border.sets.line, border.setFg('darker')),
+        border: pipe(border.sets.thick, border.setFg(lightMagenta)),
+        labelBorder: pipe(border.sets.line, border.setFg(color.grays[20])),
+        vGap: -1,
       },
       boxes.labeled.of,
     ),
@@ -17,67 +27,62 @@ const compositional = pipe(
 );
 
 const title = pipe(`stacka`, box.of),
-  titleN = (n: number) => {
-    const c = Math.floor(255 / (n + 1) ** 2);
-    return pipe(
-      strike`stacka`,
-      pipe([c, c, c, 0.5], color.rgba, color.fg),
-      box.of,
-    );
-  },
+  titleN = (n: number) =>
+    pipe(strike`stacka`, color.fg(color.grays[n]), box.fromRow),
   titlePair = (n: number) =>
     flow(pipe(n, titleN, box.above), pipe(n, titleN, box.below)),
-  titles = pipe(title, titlePair(1), titlePair(2), titlePair(3));
+  titles = pipe(title, titlePair(70), titlePair(50), titlePair(20));
 
-const withTitles = pipe(
-  compositional,
-  box.snugBelowCenter(titles),
-  box.blendUnder,
-);
-
-const terminal = pipe(
+const terminal: Box = pipe(
   {
     row: italic`terminal`,
     apply: flow(
       box.hMargins(2),
-      box.blend.set('multiply'),
-      pipe(border.sets.round, border.setFg('magenta'), border),
+      pipe(border.sets.round, border.setFg(magenta), border),
     ),
   },
   box,
-  border.space,
+  box.margin(1),
 );
 
 const compositionalTerminal = pipe(
   terminal,
-  pipe(withTitles, box.rightOfGap(-3)),
+  pipe(
+    titles,
+    pipe(compositional, box.blendScreen, box.aboveCenterGap(-1)),
+    box.rightOfGap(-3),
+  ),
+  box.marginTop(2),
 );
 
-const pseudographics = pipe(
+const pseudographics: Box = pipe(
   {
-    row: pipe(bold`pseudographics`, color.of(['black', 'pink'])),
+    row: pipe('pseudographics', color.bg(darkMagenta)),
     backdrop: backdrop.checkers1x1,
-    blend: 'normal',
-    apply: box.addSize(size(2, 2)),
-  },
-  box.centered,
-  box.unaryBranchWith({
+    blend: 'screen',
     align: align.middleCenter,
-    backdrop: backdrop.halfCheckers,
+    height: 3,
+    apply: flow(box.addWidth(2), box.margin(1)),
+  },
+  box,
+  flip(box.unaryBranchWith)({
+    align: align.middleCenter,
+    backdrop: backdrop.colorHalfCheckers(semiGray),
+    blend: 'screen',
     apply: flow(
-      pipe(2, size.square, box.addSize),
-      pipe('dark', border.checkeredNear, border),
+      box.center,
+      pipe([color.grays[30], darkMagenta], border.checkeredNear, border),
+      border.colored('halfSolidNear', [color.grays[20], color.grays[10]]),
+      box.margin(1),
+      pipe(border.sets.double, border.setFg(darkMagenta), border),
     ),
   }),
-  border.nest([
-    pipe(border.sets.space, border.setBg('darker')),
-    pipe(border.sets.double, border.setFg('pink')),
-  ]),
 );
 
 const res = pipe(
   compositionalTerminal,
-  pipe(pseudographics, box.leftOfMiddleGap(-3)),
+  box.blendScreen,
+  pipe(pseudographics, box.leftOfGap(-3)),
 );
 
 box.print(res);

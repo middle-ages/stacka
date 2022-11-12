@@ -1,13 +1,21 @@
-export * from './geometry';
+export * as backdrop from './backdrop';
+export * as cell from './cell';
+export * as color from './color';
+export * as grid from './grid';
+export * as style from './style';
 export * from './align';
 export * from './bitmap';
-export * from './glyph';
-export * from './color';
-export * from './grid';
 export * from './block';
+export * from './border';
 export * from './box';
 export * from './boxes';
-export * from './border';
-export * from './backdrop';
+export * from './geometry';
+export * from './glyph';
 export * from './report';
 export * from './term';
+
+export type { Style, Deco, DecoList } from 'src/style';
+export type { Cell } from 'src/cell';
+export type { Level, Color, ColorName, BlendMode } from 'src/color';
+export type { Grid } from 'src/grid';
+export type { Backdrop } from 'src/backdrop';

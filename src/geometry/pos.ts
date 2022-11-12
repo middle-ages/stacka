@@ -1,4 +1,3 @@
-import * as fc from 'fast-check';
 import {
   array as AR,
   eq as EQ,
@@ -49,8 +48,6 @@ export const pair: Unary<Pos, Pair<number>> = typedValues,
 //#endregion
 
 //#region instances
-const maxPosNat = fc.nat(100);
-
 export const getMonoid: Unary<MO.Monoid<number>, MO.Monoid<Pos>> = (
   monoid: MO.Monoid<number>,
 ) => MO.struct({ top: monoid, left: monoid });
@@ -69,8 +66,7 @@ export const ord: Record<PosKey, OD.Ord<Pos>> = {
   },
   show: SH.Show<Pos> = {
     show: ({ top, left }) => `▲${top}:◀${left}`,
-  },
-  arb: fc.Arbitrary<Pos> = fc.record({ top: maxPosNat, left: maxPosNat });
+  };
 //#endregion
 
 //#region modify

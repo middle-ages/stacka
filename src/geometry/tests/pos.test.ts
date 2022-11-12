@@ -1,6 +1,7 @@
 import * as laws from 'fp-ts-laws';
 import { pos, size } from 'src/geometry';
 import { assert, suite, test } from 'vitest';
+import { posArb } from './helpers';
 
 const show = pos.show.show;
 
@@ -40,8 +41,8 @@ suite('pos', () => {
     assert.deepEqual(pos.subSize(size(1, 2))(pos(3, 5)), pos(-1, -4)));
 
   suite('laws', () => {
-    test('ord', () => laws.ord(pos.ord.left, pos.arb));
-    test('sum monoid', () => laws.monoid(pos.monoid.sum, pos.eq, pos.arb));
-    test('max monoid', () => laws.monoid(pos.monoid.max, pos.eq, pos.arb));
+    test('ord', () => laws.ord(pos.ord.left, posArb));
+    test('sum monoid', () => laws.monoid(pos.monoid.sum, pos.eq, posArb));
+    test('max monoid', () => laws.monoid(pos.monoid.max, pos.eq, posArb));
   });
 });

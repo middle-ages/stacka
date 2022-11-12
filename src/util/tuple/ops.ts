@@ -1,6 +1,7 @@
 import { function as FN } from 'fp-ts';
+import { N } from 'ts-toolbelt';
 import { Unary } from 'util/function';
-import { Pair, Tuple3, Tuple4 } from './types';
+import { Pair, Tuple3, Tuple4, TupleN } from './types';
 
 export type WithKeys<K1 extends string, K2 extends string, A, B> = {
   [k in K1]: A;
@@ -43,6 +44,11 @@ export const append =
   <A>(a: A) =>
   <T extends readonly [...any[]]>(tuple: T): readonly [...T, A] =>
     [...tuple, a];
+
+export const appendTuple =
+  <T, TLen extends number>(fst: TupleN<T, TLen>) =>
+  <ULen extends number>(snd: TupleN<T, ULen>) =>
+    [...fst, ...snd] as const as TupleN<T, N.Add<TLen, ULen>>;
 
 export const flattenPair = <T>([fst, snd]: Pair<Pair<T>>): Tuple4<T> => [
   ...fst,

@@ -1,6 +1,6 @@
 import { either as EI } from 'fp-ts';
-import { pipe } from 'fp-ts/lib/function';
-import { Lazy, Unary } from './function';
+import { pipe, Lazy } from 'fp-ts/lib/function';
+import { Unary } from './function';
 
 const _tag = Symbol();
 

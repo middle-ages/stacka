@@ -1,6 +1,5 @@
-import { flow, pipe } from 'fp-ts/lib/function';
+import { Lazy, flow, pipe } from 'fp-ts/lib/function';
 import { AlgebraOf } from 'util/fix/kind1';
-import { Lazy } from 'util/function';
 import { delay, final, tco, Tco } from 'util/tco';
 import { bind, done, matchTrampoline, Trampoline, URI } from './types';
 

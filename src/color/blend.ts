@@ -1,62 +1,72 @@
 import * as BLE from 'color-blend';
-import { function as FN, option as OP } from 'fp-ts';
+import { function as FN } from 'fp-ts';
 import { mapBoth } from 'fp-ts-std/Tuple';
-import { BinOpT, Unary } from 'util/function';
-import { normalize } from './convert';
-import { Color, MaybeColor } from './named';
-import { BlendMode } from './types';
+import { Unary } from 'util/function';
+import { typedKeys } from 'util/object';
+import { Pair } from 'util/tuple';
+import { Color, RgbaColor, toRgbaColor } from './types';
+import { isEmpty } from './ops';
 
-export const modes: BlendMode[] = [
+export const cssBlendModes = typedKeys(BLE);
+
+export const blendModes = [
+  ...cssBlendModes,
   'over',
   'under',
   'combineOver',
   'combineUnder',
-  'normal',
-  'colorBurn',
-  'colorDodge',
-  'darken',
-  'difference',
-  'exclusion',
-  'hardLight',
-  'hue',
-  'lighten',
-  'luminosity',
-  'multiply',
-  'overlay',
-  'saturation',
-  'screen',
-  'softLight',
-];
+] as const;
 
-type CssBlendMode = keyof typeof BLE;
+export type CssBlendMode = typeof cssBlendModes[number] | 'default';
 
-export const blend: Unary<CssBlendMode, BinOpT<Color>> = mode =>
-  FN.flow(mapBoth(normalize), FN.tupled(BLE[mode]));
-
-export const blendColor: Unary<BlendMode, BinOpT<Color>> =
-  mode =>
-  ([below, above]) =>
-    mode === 'under' || mode === 'combineUnder'
-      ? below
-      : mode === 'over' || mode === 'combineOver'
-      ? above
-      : FN.pipe([below, above], blend(mode));
-
-export const blendMaybeColor: Unary<BlendMode, BinOpT<MaybeColor>> =
-  mode =>
-  ([below, above]) =>
-    FN.pipe(
-      above,
-      OP.fold(FN.constant(below), aboveColor =>
-        FN.pipe(
-          below,
-          OP.fold(FN.constant(above), belowColor =>
-            FN.pipe([belowColor, aboveColor], blendColor(mode), OP.some),
-          ),
-        ),
-      ),
-    );
+/**
+ * Beyond the CSS color blends, we make available _four_ helpful blend modes:
+ *
+ * 1. over - ignores bottom layer, only top is composited. This is an alias to
+ *    the `normal` CSS blend mode
+ * 2. under - ignores top layer, only bottom is composited
+ * 3. combineOver - like `over` in that bottom styles are ignored, but _does_ combine runes
+ * 4. combineUnder - like `under` in that top styles are ignored, but _does_ combine runes
+ *
+ */
+export type BlendMode = typeof blendModes[number];
 
 export const defaultBlendMode = 'combineOver';
 
-export const defaultBlend = blendColor(defaultBlendMode);
+/**
+ * Wrap the CSS blend modes for handling of the _four_ special cases:
+ *
+ * 1. 'combineOver'
+ * 1. 'over'
+ * 1. 'combineUnder'
+ * 1. 'under'
+ *
+ * @param mode The blend mode to use.
+ * @returns A function that will blend two colors.
+ */
+export const blend: Unary<BlendMode, Unary<Pair<Color>, RgbaColor>> =
+  mode =>
+  ([lower, upper]) => {
+    const [lowerRgba, upperRgba] = FN.pipe(
+      [lower, upper],
+      mapBoth(toRgbaColor),
+    );
+
+    //    console.log({ mode, lower, upper });
+
+    return isEmpty(upper)
+      ? lowerRgba
+      : isEmpty(lower)
+      ? upperRgba
+      : mode === 'under' || mode === 'combineUnder'
+      ? lowerRgba
+      : mode === 'over' ||
+        mode === 'combineOver' ||
+        (mode as CssBlendMode) === 'default'
+      ? upperRgba
+      : upperRgba.a === 0
+      ? lowerRgba
+      : lowerRgba.a === 0
+      ? upperRgba
+      : BLE[mode](lowerRgba, upperRgba);
+  };

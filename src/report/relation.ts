@@ -4,7 +4,8 @@ import { append, prepend } from 'fp-ts-std/String';
 import { withFst } from 'fp-ts-std/Tuple';
 import { bitmap } from 'src/bitmap';
 import { Box, box } from 'src/box';
-import { color as co, Color } from 'src/color';
+import { Color } from 'src/color';
+import * as CO from 'src/color';
 import { glyph, Relation, RelationName } from 'src/glyph';
 import { BinaryC, Unary } from 'util/function';
 import { around } from 'util/string';
@@ -16,25 +17,26 @@ const [digits2, digits3]: Pair<Unary<number, string>> = [
   n => n.toLocaleString().padStart(3),
 ];
 
-const [leftHeadBg, rightHeadBg]: Pair<Color> = ['darkest', 'darker'];
+const [leftHeadBg, rightHeadBg]: Pair<Color> = [CO.grays[5], CO.grays[15]];
 
 const color = {
-  name: FN.flow(append(' '), co.of(['orange', leftHeadBg])),
-  label: FN.flow(prepend(' '), co.of(['grey', rightHeadBg])),
-  dim: co('dim'),
-  dimmer: co('dimmer'),
-  num: co('yellow'),
+  name: FN.flow(append(' '), CO.of(['orange', leftHeadBg])),
+  label: FN.flow(prepend(' '), CO.of([CO.grays[80], rightHeadBg])),
+  dim: CO.fg(0xff_60_60_60),
+  text: CO.grays[80],
+  dimmer: CO.fg(0xff_50_50_50),
+  num: CO.fg(0xff_00_a0_d0),
   idx: (idx: number) =>
     FN.pipe(
       idx.toLocaleString(),
       append('.'),
-      co.fg('dim'),
-      FN.pipe(bitmap.line.halfSolid.left, co.of(['black', leftHeadBg]), append),
+      CO.fg(0xff_60_60_60),
+      FN.pipe(bitmap.line.halfSolid.left, CO.of(['black', leftHeadBg]), append),
     ),
 };
 
 const stat: BinaryC<string, number, string> = s =>
-  FN.flow(digits3, color.num, append(` ${s} `));
+  FN.flow(digits3, color.num, append(` ${CO.fg(color.text)(s)} `));
 
 const deco = {
   parens: around(color.dimmer('('), color.dimmer(')')),
@@ -106,7 +108,7 @@ export const relationReport: BinaryC<number, [number, RelationName], string> =
       summary,
       FN.pipe(relation.chains, relationChainsReport(width), box.above),
       box.blendOver,
-      box.setSolidBg(leftHeadBg),
+      box.colorBg(leftHeadBg),
       box.asString,
     );
   };

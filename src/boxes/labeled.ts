@@ -1,47 +1,54 @@
-import { tuple as TU, function as FN, option as OP } from 'fp-ts';
-import { uncurry2 } from 'fp-ts-std/Function';
-import { mapBoth } from 'fp-ts-std/Tuple';
+import { function as FN } from 'fp-ts';
 import { HAlign } from 'src/align';
 import { border as BO, Border } from 'src/border';
 import { box, Box } from 'src/box';
-import { Color, MaybeColor } from 'src/color';
+import * as color from 'src/color';
+import { Color } from 'src/color';
+import { backdrop } from 'src/stacka';
 import { BinaryC, Endo, Unary } from 'util/function';
 import { Pair } from 'util/tuple';
 
 export interface LabeledConfig {
   horizontal: HAlign;
   border: Border;
-  bg: MaybeColor;
+  bg: Color;
   labelBorder: Border;
-  labelBg: MaybeColor;
+  labelBg: Color;
   vGap: number;
 }
 
-const defaultBorder = FN.pipe(BO.sets.dotted, BO.setFg('dark'));
-
 const config: Unary<Partial<LabeledConfig>, LabeledConfig> = ({
   horizontal = 'center',
-  border = defaultBorder,
-  bg = OP.none,
-  labelBorder = defaultBorder,
-  labelBg = OP.none,
-  vGap = -1,
+  border = BO.empty,
+  bg = color.empty,
+  labelBorder = BO.empty,
+  labelBg = color.empty,
+  vGap = 0,
 }) => ({ horizontal, border, bg, labelBorder, labelBg, vGap });
 
 const of: BinaryC<Partial<LabeledConfig>, string, Endo<Box>> =
-  partialConfig => row => content => {
+  partialConfig => row => body => {
     const { horizontal, border, vGap, bg, labelBorder, labelBg } =
       config(partialConfig);
 
-    const parts: Pair<Box> = FN.pipe([content, box({ row, horizontal })]);
+    const label = box({ row, horizontal }),
+      bodyWidth = box.width.get(body) + BO.width(border),
+      labelWidth = bodyWidth - BO.width(labelBorder);
 
-    return FN.pipe(
-      parts,
-      FN.pipe(parts, box.maxWidth, box.width.set, mapBoth),
-      TU.bimap(box.maybeSolidBg(bg), box.maybeSolidBg(labelBg)),
-      TU.bimap(BO(labelBorder), BO(border)),
-      uncurry2(box.aboveGap(vGap)),
+    const labelPanel = FN.pipe(
+      label,
+      box.width.set(labelWidth),
+      box.addBg(labelBg),
+      BO(labelBorder),
     );
+
+    const bodyPanel = FN.pipe(
+      body,
+      BO(border),
+      FN.pipe(bg, backdrop.solidBg, box.backdrop.set),
+    );
+
+    return FN.pipe(labelPanel, FN.pipe(bodyPanel, box.aboveGap(vGap)));
   };
 
 const buildLabeled: Unary<string, Endo<Box>> = of({}),
@@ -52,8 +59,8 @@ const buildLabeled: Unary<string, Endo<Box>> = of({}),
     of({
       border: BO.empty,
       labelBorder: BO.empty,
-      bg: OP.some(bg),
-      labelBg: OP.some(labelBg),
+      bg,
+      labelBg,
     });
 
 const fns = {

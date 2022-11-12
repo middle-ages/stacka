@@ -1,15 +1,12 @@
-import { function as FN, option as OP } from 'fp-ts';
-import { backdrop as BD } from 'src/backdrop';
-import { block as BL, Block } from 'src/block';
-import { MaybeColor } from 'src/color';
+import { function as FN, readonlyArray as RA } from 'fp-ts';
 import * as LE from 'monocle-ts/Lens';
+import { block as BL, Block } from 'src/block';
+import { Color } from 'src/color';
+import * as CO from 'src/color';
 import * as GE from 'src/geometry';
-import { Cell, grid as GR, Style, Styled } from 'src/grid';
-import { Endo, Unary } from 'util/function';
 import { modLens, ModLens } from 'util/lens';
 import * as TR from 'util/tree';
-import { Pair } from 'util/tuple';
-import { Box, BoxGet, BoxMod } from './types';
+import { Box, BoxGet } from './types';
 
 export const block: ModLens<Box, Block> = TR.value<Block>();
 
@@ -19,7 +16,9 @@ export const block: ModLens<Box, Block> = TR.value<Block>();
  * 1. width = max row width
  * 2. height = number of rows
  */
-export const measureGrid: BoxGet<GE.Size> = FN.flow(block.get, BL.measureGrid);
+export const sizeFromBlock = block.mod(BL.resetSize),
+  paintBlock = FN.flow(block.get, BL.paint),
+  measureGrid: BoxGet<GE.Size> = FN.flow(block.get, BL.measureGrid);
 
 const toBlock = <T>(l: LE.Lens<Block, T>): ModLens<Box, T> =>
   FN.pipe(block, LE.compose(l), modLens);
@@ -35,69 +34,45 @@ export const [grid, align, blend, backdrop, hAlign, vAlign, image, project] = [
   toBlock(BL.project),
 ];
 
-export const sizeFromBlock = block.mod(BL.resetSize),
-  paintBlock = FN.flow(block.get, BL.paint),
-  modGridMaybe: Unary<Unary<Cell, Cell[]>, Endo<Box>> = FN.flow(
-    GR.modCells,
-    grid.mod,
-  ),
-  modGridEmpty: Unary<Cell, Endo<Box>> = FN.flow(GR.modEmpty, grid.mod),
-  modGridStyled: BoxMod<Styled> = FN.flow(GR.modStyled, grid.mod),
-  modGridChar: BoxMod<string> = FN.flow(GR.modChar, grid.mod),
-  modGridStyle: BoxMod<Style> = FN.flow(GR.modStyle, grid.mod),
-  [
-    setFgOpacity,
-    setBgOpacity,
-    setColor,
-    setStyle,
-
-    setGridFgOpacity,
-    setGridBgOpacity,
-    setGridColor,
-    setGridStyle,
-  ] = [
-    FN.flow(BL.setFgOpacity, block.mod),
-    FN.flow(BL.setBgOpacity, block.mod),
-    FN.flow(BL.setColor, block.mod),
-    FN.flow(BL.setStyle, block.mod),
-
-    FN.flow(BD.setGridFgOpacity, backdrop.mod),
-    FN.flow(BD.setGridBgOpacity, backdrop.mod),
-    FN.flow(BL.setGridColor, block.mod),
-    FN.flow(BL.setGridStyle, block.mod),
-  ];
-
-export const {
-  unsetFg,
-  unsetBg,
-
-  unsetColor,
-  unsetGridFg,
-  unsetGridBg,
-
-  unsetGridColor,
-
+export const [
+  alignGrid,
+  clearFg,
+  clearBg,
+  clearDeco,
+  clearColor,
+  flipColor,
+  clearGridFg,
+  clearGridBg,
+  clearGridDeco,
+  clearGridColor,
+  flipGridColor,
+  layoutGrid,
   blendNormal,
   blendScreen,
   blendOver,
   blendUnder,
-} = BL.delegateZero(block);
+  combineOver,
+  combineUnder,
+] = FN.pipe(BL.endomorphisms, RA.map(block.mod));
 
-export const { setFg, setBg, setGridFg, setGridBg, setSolidFg, setSolidBg } =
-  BL.delegateColor(block);
-
-export const maybeSolidBg: Unary<MaybeColor, Endo<Box>> = OP.fold(
-  () => FN.identity,
-  setSolidBg,
+export const [setFg, setBg, addBg, colorBg, setGridFg, setGridBg] = FN.pipe(
+  BL.colorSetters,
+  RA.map(f => (color: Color) => block.mod(f(color))),
 );
 
-// TODO border edge image or grid?
-export const measureImage: Unary<Box, GE.Size> = FN.flow(
-  image.get,
-  GR.measureAligned,
-);
+export const setStyle = FN.flow(BL.setStyle, block.mod),
+  setGridStyle = FN.flow(BL.setGridStyle, block.mod);
 
-export const [imageWidth, imageHeight]: Pair<Unary<Box, number>> = [
-  FN.flow(measureImage, GE.size.width.get),
-  FN.flow(measureImage, GE.size.height.get),
+export const [modFg, modBg] = [
+  FN.flow(BL.modFg, block.mod),
+  FN.flow(BL.modBg, block.mod),
 ];
+
+export const fg = CO.delegateMods(modFg),
+  bg = CO.delegateMods(modBg);
+
+export const imageSize = FN.flow(block.get, BL.imageSize),
+  [imageWidth, imageHeight] = [
+    (b: Box) => imageSize(b).width,
+    (b: Box) => imageSize(b).height,
+  ];

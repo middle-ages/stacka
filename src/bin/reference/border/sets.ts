@@ -1,14 +1,5 @@
-import { array as AR, function as FN, option as OP, tuple as TU } from 'fp-ts';
-import {
-  Border,
-  border,
-  BorderName,
-  Box,
-  box,
-  Color,
-  color,
-  ColorPair,
-} from 'src/stacka';
+import { array as AR, function as FN, tuple as TU } from 'fp-ts';
+import { Border, border, BorderName, Box, box, Color, color } from 'src/stacka';
 import stringWidth from 'string-width';
 import * as HE from '../../helpers';
 
@@ -16,9 +7,7 @@ import * as HE from '../../helpers';
 
 const borders = Object.entries(border.sets) as [BorderName, Border][];
 
-const demoNameBg: Color = 'darker',
-  demoName: ColorPair = ['white', demoNameBg],
-  demo: ColorPair = ['lime', 'black'];
+const demo: [Color, Color] = ['lime', 'black'];
 
 const cellWidth =
   Math.max(...FN.pipe(borders, AR.map(FN.flow(TU.fst, stringWidth)))) + 1;
@@ -26,14 +15,11 @@ const cellWidth =
 const demoBox = ([name, br]: [string, Border]): Box =>
   box.centered({
     width: cellWidth,
-    row: FN.pipe(name, color.of(demoName)),
+    row: FN.pipe(name, color.fg(HE.lighten('lime'))),
     apply: FN.pipe(br, border.setColor(demo), border),
-    gridBg: demoNameBg,
+    gridBg: HE.grays[10],
   });
 
-const gallery = FN.pipe(
-  'Named Border Sets',
-  HE.colorGallery(1, OP.some(demoNameBg)),
-);
+const gallery = HE.colorGallery([1, 1])('Named Border Sets');
 
 FN.pipe(borders, AR.map(demoBox), gallery, box.print);
