@@ -2,23 +2,24 @@ import { function as FN } from 'fp-ts';
 import { toSnd } from 'fp-ts-std/Tuple';
 import { border, box, Box, boxes, Cat, color } from 'src/stacka';
 
-export const glass = color.semiOpaque,
-  lighten = FN.flow(color.lighten(0.4), glass),
-  lightenMost = FN.flow(color.lighten(0.47), glass),
-  darken = FN.flow(color.darken(0.25), glass),
-  darkenMore = FN.flow(color.darken(0.3), glass),
-  darkenMost = FN.flow(color.darken(0.45), glass);
+export const semiOpaque = color.semiOpaque,
+  glass = color.semiTransparent,
+  lighten = FN.flow(color.lighten(0.4), semiOpaque),
+  lightenMost = FN.flow(color.lighten(0.47), semiOpaque),
+  darken = FN.flow(color.darken(0.25), semiOpaque),
+  darkenMore = FN.flow(color.darken(0.3), semiOpaque),
+  darkenMost = FN.flow(color.darken(0.45), semiOpaque);
 
 export const colors = {
-  darkestGray: glass(color.grays[5]),
-  darkGray: glass(color.grays[35]),
-  semiGray: glass(color.grays[80]),
-  semiWhite: glass(color.grays[98]),
+  darkestGray: semiOpaque(color.grays[5]),
+  darkGray: semiOpaque(color.grays[35]),
+  semiGray: semiOpaque(color.grays[80]),
+  semiWhite: semiOpaque(color.grays[98]),
   lightOrange: lighten('orange'),
   darkOrange: darken('orange'),
   lightCrimson: lighten('crimson'),
   lightestCrimson: lightenMost('crimson'),
-  crimson: glass('crimson'),
+  crimson: semiOpaque('crimson'),
   darkCrimson: darken('crimson'),
   darkerCrimson: darkenMore('crimson'),
   darkestCrimson: darkenMost('crimson'),
@@ -34,12 +35,15 @@ const [outerBorder, outerMargins] = FN.pipe(
   labelBorder = FN.pipe(outerBorder, border.mask.noHEdges);
 
 export const panel = ([hGap, vGap]: [number, number]): Cat =>
-  boxes.win.flow.of({
-    hGap,
-    placeH: box.catRightOfGap(hGap),
-    placeV: box.catBelowGap(vGap),
-    shrink: outerMargins,
-  });
+  FN.pipe(
+    {
+      hGap,
+      placeH: box.catAlignRightOfGap('middle')(hGap),
+      placeV: box.catBelowGap(vGap),
+      shrink: outerMargins,
+    },
+    boxes.win.flow.of,
+  );
 
 /** Layout given boxes and add a label on top */
 export const colorGallery =

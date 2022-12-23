@@ -64,7 +64,7 @@ const alignGridMod: Endo<Block> = b => {
   return grid.mod(GR.alignGrid(align, size))(b);
 };
 
-export const mods: TupleN<Endo<Block>, 12> = [
+export const mods: TupleN<Endo<Block>, 11> = [
   alignGridMod,
   grid.mod(GR.clearFg),
   grid.mod(GR.clearBg),
@@ -76,7 +76,6 @@ export const mods: TupleN<Endo<Block>, 12> = [
   backdrop.mod(BD.clearDeco),
   backdrop.mod(BD.clearColor),
   backdrop.mod(BD.flip),
-  (b: Block) => grid.mod(GR.alignGrid(align.get(b), rectLenses.size.get(b)))(b),
 ];
 
 export const endomorphisms = appendTuple(mods)(blends);
@@ -93,7 +92,6 @@ export const [
   clearGridDeco,
   clearGridColor,
   flipGridColor,
-  layoutGrid,
   blendNormal,
   blendScreen,
   blendOver,

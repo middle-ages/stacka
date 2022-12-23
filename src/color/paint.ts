@@ -21,7 +21,7 @@ export const bg: Unary<Color, Endo<string>> = c => {
 export const of: Unary<Pair<Color>, Endo<string>> =
   ([fgColor, bgColor]) =>
   s =>
-    bg(bgColor)(fg(fgColor)(s));
+    fg(fgColor)(bg(bgColor)(s));
 
 /** Add foreground and background to the given
  * [ansis](https://github.com/webdiscus/ansis) object

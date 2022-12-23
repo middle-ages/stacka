@@ -7,6 +7,7 @@ import * as GE from 'src/geometry';
 import { modLens, ModLens } from 'util/lens';
 import * as TR from 'util/tree';
 import { Box, BoxGet } from './types';
+import * as BD from 'src/backdrop';
 
 export const block: ModLens<Box, Block> = TR.value<Block>();
 
@@ -46,7 +47,6 @@ export const [
   clearGridDeco,
   clearGridColor,
   flipGridColor,
-  layoutGrid,
   blendNormal,
   blendScreen,
   blendOver,
@@ -76,3 +76,6 @@ export const imageSize = FN.flow(block.get, BL.imageSize),
     (b: Box) => imageSize(b).width,
     (b: Box) => imageSize(b).height,
   ];
+
+/** Set box backdrop to `solidBg` at given color */
+export const setSolidBg = FN.flow(BD.solidBg, backdrop.set);

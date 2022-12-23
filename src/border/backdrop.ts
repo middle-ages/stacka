@@ -5,7 +5,7 @@ import { Color } from 'src/color';
 import { Style } from 'src/style';
 import { Binary, Endo, Unary } from 'util/function';
 import { mapValues } from 'util/object';
-import { Pair, Tuple3, tuple3Map, Tuple4 } from 'util/tuple';
+import { Pair, Tuple3, tuple3Map } from 'util/tuple';
 import { apply } from './apply';
 import { sets } from './sets';
 import { Border, BorderName } from './types';
@@ -44,7 +44,7 @@ export const [withFg, withBg, withColorBg] = FN.pipe(
     f => (name: BorderName, color: Color) =>
       FN.pipe(sets[name], f(color), apply),
   ),
-) as Tuple4<Binary<BorderName, Color, Endo<Box>>>;
+) as Tuple3<Binary<BorderName, Color, Endo<Box>>>;
 
 /**
  * Given a border set name and a pair of fg/bg colors, add the border to the

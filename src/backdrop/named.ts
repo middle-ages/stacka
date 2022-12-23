@@ -1,4 +1,9 @@
-import { array as AR, function as FN, tuple as TU } from 'fp-ts';
+import {
+  predicate as PRE,
+  array as AR,
+  function as FN,
+  tuple as TU,
+} from 'fp-ts';
 import { transpose } from 'fp-ts-std/Array';
 import { flip } from 'fp-ts-std/Function';
 import { dup, mapBoth } from 'fp-ts-std/Tuple';
@@ -15,6 +20,8 @@ import { Pair, Tuple4 } from 'util/tuple';
 import { Backdrop, buildBackdrop, repeat, stretch } from './types';
 
 export const empty: Backdrop = buildBackdrop('center')(GR.empty());
+
+export const isEmpty: PRE.Predicate<Backdrop> = b => GR.isEmpty(b.image);
 
 export const repeatCell: Unary<Cell, Backdrop> = FN.flow(GR.oneCell, repeat);
 

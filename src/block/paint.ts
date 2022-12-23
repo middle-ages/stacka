@@ -10,12 +10,20 @@ import { Block } from './types';
 
 /** Render grid and align results inside a rectangle */
 export const paint: Unary<Block, Grid> = b => {
-  const [align, size] = [BLE.align.get(b), RCT.size.get(b)];
+  const [align, size, backdrop] = [
+    BLE.align.get(b),
+    RCT.size.get(b),
+    BLE.backdrop.get(b),
+  ];
+
+  const grid = GR.alignGrid(align, size)(b.grid);
+
+  if (BD.isEmpty(backdrop)) return grid;
 
   return FN.pipe(
     size,
-    FN.pipe(b, BLE.backdrop.get, BD.paint),
-    FN.pipe(b, BLE.layoutGrid, BLE.grid.get, withSnd),
+    BD.paint(backdrop),
+    withSnd(grid),
     FN.pipe(b, BLE.blend.get, GR.stackAlign([align, size])),
   );
 };

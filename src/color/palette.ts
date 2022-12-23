@@ -22,10 +22,8 @@ export const cycle: Unary<Color[], FN.Lazy<Color>> = colors => {
   };
 };
 
-export const rainbow6 = rainbowN(6);
+export const rainbow6 = rainbowN(6),
+  rainbow8 = rainbowN(8);
 
-export const rainbow8 = rainbowN(8);
-
-export const rainbow6Gen = () => cycle(rainbow6);
-
-export const rainbow8Gen = () => cycle(rainbow8);
+export const rainbow6Gen = () => cycle(rainbow6),
+  rainbow8Gen = () => cycle(rainbow8);

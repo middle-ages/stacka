@@ -60,11 +60,11 @@ const colors = {
       HE.grays[75],
       HE.grays[90],
     ],
-    AR.map(HE.glass),
+    AR.map(HE.semiOpaque),
   ),
   rainbow: FN.pipe(
     color.rainbow8,
-    AR.map(FN.flow(color.desaturate(0.25), color.lighten(0.1), HE.glass)),
+    AR.map(FN.flow(color.desaturate(0.25), color.lighten(0.1), HE.semiOpaque)),
   ),
 } as const;
 

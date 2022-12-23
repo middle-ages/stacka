@@ -75,13 +75,13 @@ const atPhase = (phase: number) =>
     pipe(phase, wave, AR.map),
     box.branch,
     box.blend.set('screen'),
-    box.subHeight(topMargin),
+    box.subHeight(1),
     border.colored('hMcGugan', [0xff_30_30_30, 0xff_08_08_08]),
     box.marginLeft(hMargin),
     box.print,
   );
 
 for (let phase = 0; phase < phases; phase++) {
-  process.stdout.cursorTo(0, 3);
+  process.stdout.cursorTo(0, topMargin - 2);
   atPhase(phase);
 }
